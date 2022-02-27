@@ -4,3 +4,5 @@ influxdb:
   username: root
   password: root
   dbname: TSAD_Evaluator
+dataset:
+  split_ratio: 0.5
