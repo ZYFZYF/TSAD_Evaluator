@@ -17,7 +17,8 @@ dataframe_client = DataFrameClient(host, port, username, password, dbname)
 
 
 def save_ts_data(data: pd.DataFrame, table_name: str):
-    dataframe_client.write_points(dataframe=data, measurement=table_name, batch_size=1000)
+    dataframe_client.drop_measurement(measurement=table_name)
+    dataframe_client.write_points(dataframe=data, measurement=table_name, batch_size=5000)
 
 
 def load_ts_data(table_name: str):

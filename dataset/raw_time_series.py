@@ -5,7 +5,6 @@ import pandas as pd
 from database.influxdbtool import save_ts_data, save_meta_data, load_ts_data, load_meta_data
 from time_series import TimeSeries
 from utils.config import CONFIG
-from utils.log import *
 
 
 class RawTimeSeries(TimeSeries):
@@ -44,8 +43,6 @@ class RawTimeSeries(TimeSeries):
     # TODO 尝试把这块儿写的漂亮一点，现在这个键值对儿重复了好多次
     @classmethod
     def load(cls, name):
-        logging.info(f"Loading data of {name}")
         data = load_ts_data(name)
-        logging.info(f"Loading meta of {name}")
         meta = load_meta_data({'name': name})
         return cls(data=data, ds_name=meta['ds_name'], ts_name=meta['ts_name'], train_data_len=meta['train_data_len'])
