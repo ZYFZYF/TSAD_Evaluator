@@ -18,8 +18,12 @@ class RawTimeSeries(TimeSeries):
         else:
             self.train_data_len = train_data_len
         # 判断是否传入了label字段
-        if 'label' not in self.data.columns:
-            raise ValueError("should have label(0 for anomaly 1 for normal) column")
+        for label_column in ['label', 'anomaly', 'is_anomaly']:
+            if label_column in self.data.columns:
+                self.data.rename(columns={label_column: 'label'}, inplace=True)
+                break
+        else:
+            self.data['label'] = 0
 
     def split(self):
         return TimeSeries(self.data.iloc[:self.train_data_len]), TimeSeries(self.data.iloc[self.train_data_len:])
