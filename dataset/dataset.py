@@ -106,8 +106,8 @@ if __name__ == '__main__':
     # yahoo.save()
     # kpi = Dataset.fetch_KPI('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/KPI/KPI-Anomaly-Detection-master')
     # kpi.save()
-    # skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
-    # skab.save()
-    jump = Dataset.fetch_JumpStarter(
-        '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/JumpStarter/JumpStarter-main')
-    jump.save()
+    skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
+    skab.save()
+    # jump = Dataset.fetch_JumpStarter(
+    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/JumpStarter/JumpStarter-main')
+    # jump.save()

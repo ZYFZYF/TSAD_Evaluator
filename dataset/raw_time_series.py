@@ -24,6 +24,7 @@ class RawTimeSeries(TimeSeries):
                 break
         else:
             self.data['label'] = 0
+        self.dim_num = len(self.data.columns) - 1
 
     def split(self):
         return TimeSeries(self.data.iloc[:self.train_data_len]), TimeSeries(self.data.iloc[self.train_data_len:])
@@ -42,7 +43,8 @@ class RawTimeSeries(TimeSeries):
         save_meta_data(tags={'name': self.gen_table_name()}, fields={'dataset': self.ds_name,
                                                                      'ds_name': self.ds_name,
                                                                      'ts_name': self.ts_name,
-                                                                     'train_data_len': self.train_data_len})
+                                                                     'train_data_len': self.train_data_len,
+                                                                     'dim_num': self.dim_num})
 
     # TODO 尝试把这块儿写的漂亮一点，现在这个键值对儿重复了好多次
     @classmethod
