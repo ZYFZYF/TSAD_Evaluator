@@ -1,5 +1,6 @@
 # @Time    : 2022/2/27 19:56
 # @Author  : ZYF
+import numpy as np
 import pandas as pd
 
 from database.influxdbtool import save_ts_data, save_meta_data, load_ts_data, load_meta_data
@@ -9,7 +10,7 @@ from utils.config import CONFIG
 
 class RawTimeSeries(TimeSeries):
 
-    def __init__(self, data, ds_name, ts_name, train_data_len=None):
+    def __init__(self, data: pd.DataFrame, ds_name, ts_name, train_data_len=None):
         super(RawTimeSeries, self).__init__(data)
         self.ds_name = ds_name
         self.ts_name = ts_name
@@ -25,6 +26,8 @@ class RawTimeSeries(TimeSeries):
         else:
             self.data['label'] = 0
         self.dim_num = len(self.data.columns) - 1
+        self.train_df = self.data.iloc[:self.train_data_len]
+        self.test_df = self.data.iloc[self.train_data_len:]
 
     def split(self):
         return TimeSeries(self.data.iloc[:self.train_data_len]), TimeSeries(self.data.iloc[self.train_data_len:])
@@ -52,3 +55,9 @@ class RawTimeSeries(TimeSeries):
         data = load_ts_data(name)
         meta = load_meta_data({'name': name})
         return cls(data=data, ds_name=meta['ds_name'], ts_name=meta['ts_name'], train_data_len=meta['train_data_len'])
+
+    def get_test_data(self) -> (np.ndarray, np.ndarray):
+        return self.test_df.drop(columns=['label']).values, self.test_df['label'].values
+
+    def get_train_data(self) -> (np.ndarray, np.ndarray):
+        return self.train_df.drop(columns=['label']).values, self.train_df['label'].values
