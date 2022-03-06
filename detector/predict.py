@@ -3,6 +3,8 @@
 import abc
 from enum import Enum
 
+import numpy as np
+
 
 class PredictMode(Enum):
     Offline = "offline"
@@ -14,7 +16,7 @@ class OfflinePredict(metaclass=abc.ABCMeta):
     predict_mode = PredictMode.Offline
 
     @abc.abstractmethod
-    def predict(self, x):
+    def predict(self, x: np.ndarray):
         ...
 
 

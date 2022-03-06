@@ -3,6 +3,8 @@
 import abc
 from enum import Enum
 
+import numpy as np
+
 
 class FitMode(Enum):
     Supervised = "supervised"
@@ -14,7 +16,7 @@ class SupervisedFit(metaclass=abc.ABCMeta):
     fit_mode = FitMode.Supervised
 
     @abc.abstractmethod
-    def fit(self, x, y):
+    def fit(self, x: np.ndarray, y: np.ndarray):
         ...
 
 

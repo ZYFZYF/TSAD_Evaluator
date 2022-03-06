@@ -2,11 +2,14 @@
 # @Author  : ZYF
 from typing import Union
 
+import pandas as pd
+
 from dataset.dataset import Dataset
 from dataset.raw_time_series import RawTimeSeries
 from detector.detector import Detector
 from detector.fit import FitMode
 from detector.predict import PredictMode
+from evaluate.evaluate import evaluate
 
 
 def supervised_fit(time_series: RawTimeSeries, detector: Detector):
@@ -58,8 +61,28 @@ class TaskExecutor:
         def run(ts: RawTimeSeries):
             fit_method = fit_mode2executor[detector.fit_mode]
             predict_method = predict_mode2executor[detector.predict_mode]
-            fit_method(time_series=ts, detector=detector)
-            predict_method(time_series=time_series, detector=detector)
+
+            def parse(result):
+                if isinstance(result, pd.Dataframe):
+                    dataframe = result
+                elif isinstance(result, list):
+                    if isinstance(result[0], float):
+                        dataframe = pd.DataFrame(data={'score': result})
+                    elif isinstance(result[0], dict):
+                        if 'score' not in result[0]:
+                            raise ValueError('must have a key named score')
+                        dataframe = pd.DataFrame.from_records(result)
+                    else:
+                        raise ValueError('element of list must be float or dict')
+                else:
+                    raise ValueError('result must be dataframe or list!')
+                return dataframe
+
+            df = parse(fit_method(time_series=ts, detector=detector))
+            df.index = ts.data.index[:len(df)]
+            tf = parse(predict_method(time_series=time_series, detector=detector))
+            tf.index = ts.data.index[-len(tf):]
+            eval_result = evaluate(tf['score'].tolist(), ts.get_test_data()[1])
 
         if isinstance(data, RawTimeSeries):
             run(data)
