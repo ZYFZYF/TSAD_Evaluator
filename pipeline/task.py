@@ -6,6 +6,7 @@ import pandas as pd
 
 from dataset.dataset import Dataset
 from dataset.raw_time_series import RawTimeSeries
+from dataset.result_time_series import ResultTimeSeries
 from detector.detector import Detector
 from detector.fit import FitMode
 from detector.predict import PredictMode
@@ -14,12 +15,12 @@ from evaluate.evaluate import evaluate
 
 def supervised_fit(time_series: RawTimeSeries, detector: Detector):
     (data, label) = time_series.get_train_data()
-    detector.fit(data, label)
+    return detector.fit(data, label)
 
 
 def unsupervised_fit(time_series: RawTimeSeries, detector: Detector):
     (data, _) = time_series.get_train_data()
-    detector.fit(data)
+    return detector.fit(data)
 
 
 def unwanted_fit(time_series: RawTimeSeries, detector: Detector):
@@ -28,8 +29,7 @@ def unwanted_fit(time_series: RawTimeSeries, detector: Detector):
 
 def offline_predict(time_series: RawTimeSeries, detector: Detector):
     (data, label) = time_series.get_train_data()
-    predict = detector.predict(data)
-    # TODO 评估以及存储序列化的东西
+    return detector.predict(data)
 
 
 def stream_predict(time_series: RawTimeSeries, detector: Detector):
@@ -83,6 +83,8 @@ class TaskExecutor:
             tf = parse(predict_method(time_series=time_series, detector=detector))
             tf.index = ts.data.index[-len(tf):]
             eval_result = evaluate(tf['score'].tolist(), ts.get_test_data()[1])
+            ResultTimeSeries(data=pd.concat([df, tf]), ds_name=ts.ds_name, ts_name=ts.ts_name,
+                             detector_name=detector.name, eval_result=eval_result).save()
 
         if isinstance(data, RawTimeSeries):
             run(data)

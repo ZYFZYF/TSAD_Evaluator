@@ -25,8 +25,8 @@ def load_ts_data(table_name: str):
     return dataframe_client.query(f'select * from \"{table_name}\"')[table_name]
 
 
-def save_meta_data(tags: dict, fields: dict):
-    client.write_points(points=[{'measurement': 'ts_meta',
+def save_meta_data(measurement: str, tags: dict, fields: dict):
+    client.write_points(points=[{'measurement': measurement,
                                  'time': 0,
                                  'tags': tags,
                                  'fields': fields}])

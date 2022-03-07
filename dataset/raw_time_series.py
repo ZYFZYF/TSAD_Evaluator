@@ -47,7 +47,7 @@ class RawTimeSeries(TimeSeries):
                                                                      'ds_name': self.ds_name,
                                                                      'ts_name': self.ts_name,
                                                                      'train_data_len': self.train_data_len,
-                                                                     'dim_num': self.dim_num})
+                                                                     'dim_num': self.dim_num}, measurement='ts_meta')
 
     # TODO 尝试把这块儿写的漂亮一点，现在这个键值对儿重复了好多次
     @classmethod

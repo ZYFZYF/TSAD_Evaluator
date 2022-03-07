@@ -21,4 +21,4 @@ class ResultTimeSeries(TimeSeries):
 
     def save(self):
         save_ts_data(data=self.data, table_name=self.gen_table_name())
-        save_meta_data(tags={'name': self.gen_table_name()}, fields=self.__dict__)
+        save_meta_data(tags={'name': self.gen_table_name()}, fields=self.__dict__, measurement='result_ts_meta')
