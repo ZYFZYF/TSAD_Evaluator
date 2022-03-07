@@ -5,9 +5,9 @@ from typing import Union
 import pandas as pd
 
 from aggregate.aggregate import Aggregate
-from dataset.dataset import Dataset
-from dataset.raw_time_series import RawTimeSeries
-from dataset.result_time_series import ResultTimeSeries
+from data_prepare.dataset import Dataset
+from data_prepare.raw_time_series import RawTimeSeries
+from data_prepare.result_time_series import ResultTimeSeries
 from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode

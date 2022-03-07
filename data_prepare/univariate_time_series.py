@@ -1,6 +1,6 @@
 # @Time    : 2022/2/23 16:03
 # @Author  : ZYF
-from dataset.time_series import TimeSeries
+from data_prepare.time_series import TimeSeries
 
 
 class UnivariateTimeSeries(TimeSeries):

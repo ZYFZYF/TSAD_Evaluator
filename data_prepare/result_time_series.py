@@ -2,8 +2,8 @@
 # @Author  : ZYF
 import pandas as pd
 
+from data_prepare.time_series import TimeSeries
 from database.influxdbtool import save_ts_data, save_meta_data
-from dataset.time_series import TimeSeries
 from utils.utils import get_meta_data
 
 

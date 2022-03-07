@@ -7,8 +7,8 @@ from glob import glob
 import pandas as pd
 from tqdm import tqdm
 
+from data_prepare.raw_time_series import RawTimeSeries
 from database.influxdbtool import query_field_of_tags
-from dataset.raw_time_series import RawTimeSeries
 
 
 class Dataset(metaclass=ABCMeta):
@@ -72,11 +72,13 @@ class Dataset(metaclass=ABCMeta):
     @classmethod
     def fetch_JumpStarter(cls, path: str, name='JumpStarter'):
         dataset = Dataset(name)
-        for csv_file in tqdm(iterable=sorted(glob(f'{path}/dataset/Dataset[2|3]/train/*.csv')), desc=f'Reading {name}'):
+        for csv_file in tqdm(iterable=sorted(glob(f'{path}/dataset/Dataset[2|3]/train/*.csv')),
+                             desc=f'Reading {name}'):
             ts_name = '-'.join(csv_file.split('/')[-3::2]).split('.')[0]
             train = pd.read_csv(csv_file, header=None, names=[f'dim_{i}' for i in range(1, 20)])
             train['label'] = 0
-            test = pd.read_csv(csv_file.replace('train', 'test'), header=None, names=[f'dim_{i}' for i in range(1, 20)])
+            test = pd.read_csv(csv_file.replace('train', 'test'), header=None,
+                               names=[f'dim_{i}' for i in range(1, 20)])
             label_df = pd.read_csv(csv_file.replace('train', 'test_label'), header=None, names=['label'])
             test['label'] = label_df['label']
             dataset.ts.append(RawTimeSeries.union(train=train, test=test, ds_name=name, ts_name=ts_name))
@@ -101,13 +103,15 @@ if __name__ == '__main__':
     # smd.save()
     # for ts in smd2.ts:
     #     print(ts.ts_name, len(ts.data))
-    # yahoo = Dataset.fetch_Yahoo(
-    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
-    # yahoo.save()
+    yahoo = Dataset.fetch_Yahoo(
+        '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
+    yahoo.save()
     # kpi = Dataset.fetch_KPI('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/KPI/KPI-Anomaly-Detection-master')
     # kpi.save()
-    skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
-    skab.save()
+    # skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
+    # skab.save()
     # jump = Dataset.fetch_JumpStarter(
     #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/JumpStarter/JumpStarter-main')
     # jump.save()
+    # ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # ts.save()

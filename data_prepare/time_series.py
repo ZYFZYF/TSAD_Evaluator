@@ -27,9 +27,9 @@ class TimeSeries(object):
                 else:
                     # 默认从0开始，一分钟一个点
                     timestamp = [i * 60 for i in range(len(self.data))]
-                timestamp = [ts if len(str(ts)) >= 10 else ts + pd.Timestamp(year=2022, month=1, day=1).timestamp() for
-                             ts
-                             in timestamp]
+                timestamp = [ts if len(str(int(ts))) == 10 else ts + pd.Timestamp(year=2022, month=1, day=1).timestamp()
+                             for
+                             ts in timestamp]
                 self.data.index = pd.to_datetime(timestamp, unit='s')
 
     @abc.abstractmethod

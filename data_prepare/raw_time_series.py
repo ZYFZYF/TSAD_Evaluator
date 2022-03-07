@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 
+from data_prepare.time_series import TimeSeries
 from database.influxdbtool import save_ts_data, save_meta_data, load_ts_data, load_meta_data
-from dataset.time_series import TimeSeries
 from utils.config import CONFIG
 
 
@@ -15,7 +15,7 @@ class RawTimeSeries(TimeSeries):
         self.ds_name = ds_name
         self.ts_name = ts_name
         if train_data_len is None:
-            self.train_data_len = int(len(self.data) * CONFIG.get('dataset').get('split_ratio'))
+            self.train_data_len = int(len(self.data) * CONFIG.get('data_prepare').get('split_ratio'))
         else:
             self.train_data_len = train_data_len
         # 判断是否传入了label字段
@@ -47,7 +47,8 @@ class RawTimeSeries(TimeSeries):
                                                                      'ds_name': self.ds_name,
                                                                      'ts_name': self.ts_name,
                                                                      'train_data_len': self.train_data_len,
-                                                                     'dim_num': self.dim_num}, measurement='ts_meta')
+                                                                     'dim_num': self.dim_num},
+                       measurement='ts_meta')
 
     # TODO 尝试把这块儿写的漂亮一点，现在这个键值对儿重复了好多次
     @classmethod
