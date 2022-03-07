@@ -61,3 +61,11 @@ class RawTimeSeries(TimeSeries):
 
     def get_train_data(self) -> (np.ndarray, np.ndarray):
         return self.train_df.drop(columns=['label']).values, self.train_df['label'].values
+
+    def get_columns(self) -> list[str]:
+        return self.data.columns
+
+    def get_column_data(self, column_name):
+        return RawTimeSeries(data=self.data[[column_name, 'label']], ds_name=self.ds_name,
+                             ts_name=self.ts_name + '_' + column_name,
+                             train_data_len=self.train_data_len)

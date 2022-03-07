@@ -4,13 +4,16 @@ from typing import Union
 
 import pandas as pd
 
+from aggregate.aggregate import Aggregate
 from dataset.dataset import Dataset
 from dataset.raw_time_series import RawTimeSeries
 from dataset.result_time_series import ResultTimeSeries
-from detector.detector import Detector
+from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode
 from evaluate.evaluate import evaluate
+from threshold.threshold import Threshold
+from transform.transform import Transform
 
 
 def supervised_fit(time_series: RawTimeSeries, detector: Detector):
@@ -57,7 +60,8 @@ predict_mode2executor = {
 
 class TaskExecutor:
     @staticmethod
-    def exec(data: Union[RawTimeSeries, Dataset, str], detector: Detector):
+    def exec(data: Union[RawTimeSeries, Dataset, str], detector: Union[Detector, list[Detector]],
+             transform: Transform = None, aggregate: Aggregate = None, threshold: Threshold = None):
         def run(ts: RawTimeSeries):
             fit_method = fit_mode2executor[detector.fit_mode]
             predict_method = predict_mode2executor[detector.predict_mode]
@@ -78,12 +82,61 @@ class TaskExecutor:
                     raise ValueError('result must be dataframe or list!')
                 return dataframe
 
-            df = parse(fit_method(time_series=ts, detector=detector))
-            df.index = ts.data.index[:len(df)]
-            tf = parse(predict_method(time_series=time_series, detector=detector))
-            tf.index = ts.data.index[-len(tf):]
-            eval_result = evaluate(tf['score'].tolist(), ts.get_test_data()[1])
-            ResultTimeSeries(data=pd.concat([df, tf]), ds_name=ts.ds_name, ts_name=ts.ts_name,
+            def gen_result_df(real_ts: RawTimeSeries, dt: Detector, columns_prefix: str) -> (
+                    pd.DataFrame, list[float], list[float]):
+                df = parse(fit_method(time_series=real_ts, detector=dt))
+                df.index = ts.data.index[:len(df)]
+                df.rename(columns={col: columns_prefix + col for col in df.columns}, inplace=True)
+                tf = parse(predict_method(time_series=real_ts, detector=dt))
+                tf.index = ts.data.index[-len(tf):]
+                tf.rename(columns={col: columns_prefix + col for col in tf.columns}, inplace=True)
+                return pd.concat([df, tf]), df['score'].tolist(), tf['score'].tolist()
+
+            if isinstance(detector, Detector) and (isinstance(detector, MultivariateDetector) or ts.dim_num == 1):
+                result_df, train_score, test_score = gen_result_df(ts, detector, '')
+            else:
+                if isinstance(detector, list):
+                    result_df = pd.DataFrame()
+                    train_score = []
+                    test_score = []
+                    for d in detector:
+                        temp, train, test = gen_result_df(real_ts=ts, dt=d, columns_prefix=d.name + '_')
+                        if len(train_score) == 0:
+                            train_score = [[] for _ in range(len(train))]
+                        for i, x in enumerate(train):
+                            train_score[i].append(x)
+                        if len(test_score) == 0:
+                            test_score = [[] for _ in range(len(test))]
+                        for i, x in enumerate(test):
+                            test_score[i].append(x)
+                        result_df = pd.concat([result_df, temp], axis=1)
+                else:
+                    result_df = pd.DataFrame()
+                    train_score = []
+                    test_score = []
+                    for col in ts.get_columns():
+                        temp, train, test = gen_result_df(real_ts=ts.get_column_data(column_name=col), dt=detector,
+                                                          columns_prefix=col + '_')
+                        if len(train_score) == 0:
+                            train_score = [[] for _ in range(len(train))]
+                        for i, x in enumerate(train):
+                            train_score[i].append(x)
+                        if len(test_score) == 0:
+                            test_score = [[] for _ in range(len(test))]
+                        for i, x in enumerate(test):
+                            test_score[i].append(x)
+                        result_df = pd.concat([result_df, temp], axis=1)
+                if aggregate is None:
+                    raise ValueError('ensemble method should have a aggregate method')
+                train_score, test_score = aggregate.aggregate(train=train_score, test=test_score)
+                result_df['score'] = train_score + test_score
+            if threshold is not None:
+                th = threshold.threshold(train_score, test_score)
+                result_df['threshold'] = th
+            else:
+                th = None
+            eval_result = evaluate(test_score, ts.get_test_data()[1], th)
+            ResultTimeSeries(data=result_df, ds_name=ts.ds_name, ts_name=ts.ts_name,
                              detector_name=detector.name, eval_result=eval_result).save()
 
         if isinstance(data, RawTimeSeries):

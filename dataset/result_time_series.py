@@ -19,6 +19,9 @@ class ResultTimeSeries(TimeSeries):
     def gen_table_name(self):
         return f'{self.detector_name}@{self.ds_name}@{self.ts_name}'
 
+    def get_score(self):
+        return
+
     def save(self):
         save_ts_data(data=self.data, table_name=self.gen_table_name())
         save_meta_data(tags={'name': self.gen_table_name()}, fields=self.__dict__, measurement='result_ts_meta')

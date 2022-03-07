@@ -3,5 +3,5 @@
 import numpy as np
 
 
-def evaluate(pred: np.ndarray, label: np.ndarray):
+def evaluate(pred: np.ndarray, label: np.ndarray, threshold):
     return {}
