@@ -27,7 +27,7 @@ def unsupervised_fit(time_series: RawTimeSeries, detector: Detector):
 
 
 def unwanted_fit(time_series: RawTimeSeries, detector: Detector):
-    ...
+    return None
 
 
 def offline_predict(time_series: RawTimeSeries, detector: Detector):
@@ -95,37 +95,32 @@ class TaskExecutor:
             if isinstance(detector, Detector) and (isinstance(detector, MultivariateDetector) or ts.dim_num == 1):
                 result_df, train_score, test_score = gen_result_df(ts, detector, '')
             else:
+                result_df = pd.DataFrame()
+                train_score = []
+                test_score = []
+
+                def append(temp_result_df):
+                    temp, train, test = temp_result_df
+                    if transform is not None:
+                        train, test = transform.transform(train, test)
+                    nonlocal train_score, test_score, result_df
+                    if len(train_score) == 0:
+                        train_score = [[] for _ in range(len(train))]
+                    for i, x in enumerate(train):
+                        train_score[i].append(x)
+                    if len(test_score) == 0:
+                        test_score = [[] for _ in range(len(test))]
+                    for i, x in enumerate(test):
+                        test_score[i].append(x)
+                    result_df = pd.concat([result_df, temp], axis=1)
+
                 if isinstance(detector, list):
-                    result_df = pd.DataFrame()
-                    train_score = []
-                    test_score = []
                     for d in detector:
-                        temp, train, test = gen_result_df(real_ts=ts, dt=d, columns_prefix=d.name + '_')
-                        if len(train_score) == 0:
-                            train_score = [[] for _ in range(len(train))]
-                        for i, x in enumerate(train):
-                            train_score[i].append(x)
-                        if len(test_score) == 0:
-                            test_score = [[] for _ in range(len(test))]
-                        for i, x in enumerate(test):
-                            test_score[i].append(x)
-                        result_df = pd.concat([result_df, temp], axis=1)
+                        append(gen_result_df(real_ts=ts, dt=d, columns_prefix=d.name + '_'))
                 else:
-                    result_df = pd.DataFrame()
-                    train_score = []
-                    test_score = []
                     for col in ts.get_columns():
-                        temp, train, test = gen_result_df(real_ts=ts.get_column_data(column_name=col), dt=detector,
-                                                          columns_prefix=col + '_')
-                        if len(train_score) == 0:
-                            train_score = [[] for _ in range(len(train))]
-                        for i, x in enumerate(train):
-                            train_score[i].append(x)
-                        if len(test_score) == 0:
-                            test_score = [[] for _ in range(len(test))]
-                        for i, x in enumerate(test):
-                            test_score[i].append(x)
-                        result_df = pd.concat([result_df, temp], axis=1)
+                        append(gen_result_df(real_ts=ts.get_column_data(column_name=col), dt=detector,
+                                             columns_prefix=col + '_'))
                 if aggregate is None:
                     raise ValueError('ensemble method should have a aggregate method')
                 train_score, test_score = aggregate.aggregate(train=train_score, test=test_score)

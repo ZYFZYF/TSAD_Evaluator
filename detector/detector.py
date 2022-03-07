@@ -1,5 +1,7 @@
 # @Time    : 2022/3/3 21:59
 # @Author  : ZYF
+from database.influxdbtool import save_meta_data
+
 
 class Detector:
     def __init__(self):
@@ -7,6 +9,11 @@ class Detector:
         self.fit_mode = None
         self.predict_mode = None
         self.type = None
+
+    def save(self):
+        save_meta_data(measurement='detector_meta', tags={'name': self.name}, fields={'fit_mode': self.fit_mode,
+                                                                                      'predict_mode': self.predict_mode,
+                                                                                      'type': self.type})
 
 
 class UnivariateDetector(Detector):
