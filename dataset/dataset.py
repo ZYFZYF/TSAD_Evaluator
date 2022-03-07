@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from database.influxdbtool import query_field_of_tags
-from raw_time_series import RawTimeSeries
+from dataset.raw_time_series import RawTimeSeries
 
 
 class Dataset(metaclass=ABCMeta):

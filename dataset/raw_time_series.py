@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from database.influxdbtool import save_ts_data, save_meta_data, load_ts_data, load_meta_data
-from time_series import TimeSeries
+from dataset.time_series import TimeSeries
 from utils.config import CONFIG
 
 

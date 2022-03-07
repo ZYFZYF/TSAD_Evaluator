@@ -1,35 +1,43 @@
 # @Time    : 2022/3/2 14:32
 # @Author  : ZYF
 import abc
-from enum import Enum
 
 import numpy as np
 
+from detector.detector import Detector
 
-class PredictMode(Enum):
+
+class PredictMode:
     Offline = "offline"
     Stream = "stream"
     Trigger = "trigger"
 
 
-class OfflinePredict(metaclass=abc.ABCMeta):
-    predict_mode = PredictMode.Offline
+class OfflinePredict(Detector, metaclass=abc.ABCMeta):
+    def __init__(self):
+        super().__init__()
+        self.predict_mode = PredictMode.Offline
 
     @abc.abstractmethod
     def predict(self, x: np.ndarray):
         ...
 
 
-class StreamingPredict(metaclass=abc.ABCMeta):
-    predict_mode = PredictMode.Stream
+class StreamingPredict(Detector, metaclass=abc.ABCMeta):
+    def __init__(self):
+        super().__init__()
+        self.fit_mode = PredictMode.Stream
 
     @abc.abstractmethod
     def predict(self, x):
         ...
 
 
-class TriggerPredict(metaclass=abc.ABCMeta):
-    predict_mode = PredictMode.Trigger
+class TriggerPredict(Detector, metaclass=abc.ABCMeta):
+
+    def __init__(self):
+        super().__init__()
+        self.fit_mode = PredictMode.Trigger
 
     @abc.abstractmethod
     def predict(self, x):

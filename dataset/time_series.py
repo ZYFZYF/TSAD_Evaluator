@@ -1,12 +1,11 @@
 # @Time    : 2022/2/23 14:35
 # @Author  : ZYF
 import abc
-from abc import ABCMeta
 
 import pandas as pd
 
 
-class TimeSeries(metaclass=ABCMeta):
+class TimeSeries(object):
     def __init__(self, data: pd.DataFrame):
         super(TimeSeries, self).__init__()
         self.data = data.copy(deep=True)

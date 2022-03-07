@@ -4,6 +4,7 @@ import pandas as pd
 
 from database.influxdbtool import save_ts_data, save_meta_data
 from dataset.time_series import TimeSeries
+from utils.utils import get_meta_data
 
 
 class ResultTimeSeries(TimeSeries):
@@ -14,7 +15,7 @@ class ResultTimeSeries(TimeSeries):
         self.detector_name = detector_name
         for k, v in eval_result:
             self.__dict__[k] = v
-        print(self.__dict__)
+        print(get_meta_data(self))
 
     def gen_table_name(self):
         return f'{self.detector_name}@{self.ds_name}@{self.ts_name}'
@@ -24,4 +25,4 @@ class ResultTimeSeries(TimeSeries):
 
     def save(self):
         save_ts_data(data=self.data, table_name=self.gen_table_name())
-        save_meta_data(tags={'name': self.gen_table_name()}, fields=self.__dict__, measurement='result_ts_meta')
+        save_meta_data(tags={'name': self.gen_table_name()}, fields=get_meta_data(self), measurement='result_ts_meta')
