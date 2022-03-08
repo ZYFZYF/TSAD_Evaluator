@@ -3,4 +3,5 @@
 
 
 def get_meta_data(obj: object):
-    return {k: v for k in dir(obj) if isinstance(v := obj.__getattribute__(k), (float, str)) and not k.startswith('__')}
+    return {k: v for k in dir(obj) if
+            isinstance(v := obj.__getattribute__(k), (int, float, str)) and not k.startswith('__')}

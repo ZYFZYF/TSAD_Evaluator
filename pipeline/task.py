@@ -6,9 +6,11 @@ from typing import Union
 import pandas as pd
 
 from aggregate.aggregate import Aggregate
+from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
 from data_prepare.result_time_series import ResultTimeSeries
+from detector.autoencoder import AutoEncoder
 from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode
@@ -67,32 +69,37 @@ class TaskExecutor:
             fit_method = fit_mode2executor[detector.fit_mode]
             predict_method = predict_mode2executor[detector.predict_mode]
 
-            def parse(result):
-                if isinstance(result, pd.DataFrame):
-                    dataframe = result
-                elif isinstance(result, list):
-                    if isinstance(result[0], float):
-                        dataframe = pd.DataFrame(data={'score': result})
-                    elif isinstance(result[0], dict):
-                        if 'score' not in result[0]:
-                            raise ValueError('must have a key named score')
-                        dataframe = pd.DataFrame.from_records(result)
-                    else:
-                        raise ValueError('element of list must be float or dict')
+            def parse(result, is_test):
+                if result is None:
+                    dataframe = pd.DataFrame()
                 else:
-                    raise ValueError('result must be dataframe or list!')
+                    if isinstance(result, pd.DataFrame):
+                        dataframe = result
+                    elif isinstance(result, list):
+                        if isinstance(result[0], float):
+                            dataframe = pd.DataFrame(data={ANOMALY_SCORE_COLUMN: result})
+                        elif isinstance(result[0], dict):
+                            if is_test and ANOMALY_SCORE_COLUMN not in result[0]:
+                                raise ValueError('must have a key named score')
+                            dataframe = pd.DataFrame.from_records(result)
+                        else:
+                            raise ValueError('element of list must be float or dict')
+                    else:
+                        raise ValueError('result must be dataframe or list!')
                 return dataframe
 
             def gen_result_df(real_ts: RawTimeSeries, dt: Detector, columns_prefix: str) -> (
                     pd.DataFrame, list[float], list[float]):
                 logging.info(f'running {dt.__class__.__name__} for {real_ts.ts_name} of {real_ts.ds_name}...')
-                df = parse(fit_method(time_series=real_ts, detector=dt))
+                df = parse(fit_method(time_series=real_ts, detector=dt), is_test=False)
                 df.index = ts.data.index[:len(df)]
                 df.rename(columns={col: columns_prefix + col for col in df.columns}, inplace=True)
-                tf = parse(predict_method(time_series=real_ts, detector=dt))
+                tf = parse(predict_method(time_series=real_ts, detector=dt), is_test=True)
                 tf.index = ts.data.index[-len(tf):]
                 tf.rename(columns={col: columns_prefix + col for col in tf.columns}, inplace=True)
-                return pd.concat([df, tf]), df['score'].tolist(), tf['score'].tolist()
+                return pd.concat([df, tf]), (
+                    [] if ANOMALY_SCORE_COLUMN not in df.columns else df[ANOMALY_SCORE_COLUMN].tolist()), tf[
+                           ANOMALY_SCORE_COLUMN].tolist()
 
             if not isinstance(detector, list):
                 detector.save(detector_name)
@@ -128,10 +135,10 @@ class TaskExecutor:
                 if aggregate is None:
                     raise ValueError('ensemble method should have a aggregate method')
                 train_score, test_score = aggregate.aggregate(train=train_score, test=test_score)
-                result_df['score'] = train_score + test_score
+                result_df[ANOMALY_SCORE_COLUMN] = train_score + test_score
             if threshold is not None:
                 th = threshold.threshold(train_score, test_score)
-                result_df['threshold'] = th
+                result_df[THRESHOLD_COLUMN] = th
             else:
                 th = None
             eval_result = evaluate(test_score, ts.get_test_data()[1], th)
@@ -150,9 +157,11 @@ class TaskExecutor:
 
 
 if __name__ == '__main__':
-    from detector.random_detector import RandomDetector
+    # test_detector = RandomDetector()
+    # print(dir(test_detector))
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
 
-    test_detector = RandomDetector()
-    print(dir(test_detector))
+    ae_detector = AutoEncoder(window_size=60, z_dim=10)
     test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
+    TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')

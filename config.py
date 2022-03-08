@@ -17,7 +17,7 @@ DETECTOR_MEASUREMENT = 'detector_meta'
 DELIMITER = '@'
 
 # about detector result columns name
-SCORE_COLUMN = 'score'
+ANOMALY_SCORE_COLUMN = 'score'
 THRESHOLD_COLUMN = 'threshold'
 
 # about input of time series

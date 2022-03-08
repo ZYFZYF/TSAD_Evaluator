@@ -29,7 +29,7 @@ class UnsupervisedFit(Detector, metaclass=abc.ABCMeta):
         self.fit_mode = FitMode.Unsupervised
 
     @abc.abstractmethod
-    def fit(self, x):
+    def fit(self, x: np.ndarray):
         ...
 
 
