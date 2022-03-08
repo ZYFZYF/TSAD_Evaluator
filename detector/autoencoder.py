@@ -105,7 +105,6 @@ class AutoEncoder(UnivariateDetector, UnsupervisedFit, OfflinePredict):
         test_x = torch.tensor([x[i:i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size + 1)])
         for value in DataLoader(TensorDataset(test_x), batch_size=self.batch_size, shuffle=False):
             _, loss = self.model(value[0])
-            print(loss, type(value))
             for i in range(value[0].shape[0]):
                 anomaly_scores.append(loss[i].item())
         return anomaly_scores

@@ -168,6 +168,6 @@ if __name__ == '__main__':
 
     from detector.lstm import LSTM
 
-    lstm_detector = LSTM(window_size=20, batch_size=1)
+    lstm_detector = LSTM(window_size=20, batch_size=16)
     test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
