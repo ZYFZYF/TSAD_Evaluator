@@ -7,6 +7,7 @@ from glob import glob
 import pandas as pd
 from tqdm import tqdm
 
+from config import RAW_TIME_SERIES_MEASUREMENT
 from data_prepare.raw_time_series import RawTimeSeries
 from database.influxdbtool import query_field_of_tags
 
@@ -86,7 +87,8 @@ class Dataset(metaclass=ABCMeta):
 
     @classmethod
     def load(cls, name):
-        ts_name_list = query_field_of_tags({'dataset': name}, 'name')
+        ts_name_list = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': name},
+                                           field='name')
         dataset = Dataset(name)
         for ts_name in tqdm(iterable=ts_name_list, desc=f'Loading {name}'):
             dataset.ts.append(RawTimeSeries.load(ts_name))

@@ -4,6 +4,8 @@ import abc
 
 import pandas as pd
 
+from config import DATETIME_COLUMN_NAMES, TIMESTAMP_COLUMN_NAMES
+
 
 class TimeSeries(object):
     def __init__(self, data: pd.DataFrame):
@@ -11,13 +13,13 @@ class TimeSeries(object):
         self.data = data.copy(deep=True)
         # 判断是否有时间索引
         if not isinstance(self.data.index, pd.DatetimeIndex):
-            for ts_column in ['datetime']:
+            for ts_column in DATETIME_COLUMN_NAMES:
                 if ts_column in self.data.columns:
                     self.data.index = pd.to_datetime(self.data[ts_column])
                     self.data.drop(columns=[ts_column], inplace=True)
                     break
             else:
-                for ts_column in ['ts', 'timestamp']:
+                for ts_column in TIMESTAMP_COLUMN_NAMES:
                     if ts_column in self.data.columns:
                         self.data[ts_column] = self.data[ts_column].apply(pd.to_numeric)
                         ratio = 10 ** (max(0, len(str(int(self.data[ts_column].tolist()[0]))) - 10))

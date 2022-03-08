@@ -2,6 +2,7 @@
 # @Author  : ZYF
 import pandas as pd
 
+from config import RESULT_TIME_SERIES_MEASUREMENT, DELIMITER
 from data_prepare.time_series import TimeSeries
 from database.influxdbtool import save_ts_data, save_meta_data
 from utils.utils import get_meta_data
@@ -18,11 +19,12 @@ class ResultTimeSeries(TimeSeries):
         print(get_meta_data(self))
 
     def gen_table_name(self):
-        return f'{self.detector_name}@{self.ds_name}@{self.ts_name}'
+        return f'{self.detector_name}{DELIMITER}{self.ds_name}{DELIMITER}{self.ts_name}'
 
     def get_score(self):
         return
 
     def save(self):
         save_ts_data(data=self.data, table_name=self.gen_table_name())
-        save_meta_data(tags={'name': self.gen_table_name()}, fields=get_meta_data(self), measurement='result_ts_meta')
+        save_meta_data(tags={'name': self.gen_table_name()}, fields=get_meta_data(self),
+                       measurement=RESULT_TIME_SERIES_MEASUREMENT)

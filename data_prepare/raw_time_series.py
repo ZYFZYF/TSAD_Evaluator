@@ -3,9 +3,9 @@
 import numpy as np
 import pandas as pd
 
+from config import DATASET_TEST_SPLIT, DELIMITER, RAW_TIME_SERIES_MEASUREMENT
 from data_prepare.time_series import TimeSeries
 from database.influxdbtool import save_ts_data, save_meta_data, load_ts_data, load_meta_data
-from utils.config import CONFIG
 
 
 class RawTimeSeries(TimeSeries):
@@ -15,7 +15,7 @@ class RawTimeSeries(TimeSeries):
         self.ds_name = ds_name
         self.ts_name = ts_name
         if train_data_len is None:
-            self.train_data_len = int(len(self.data) * CONFIG.get('data_prepare').get('split_ratio'))
+            self.train_data_len = int(len(self.data)) * (1 - DATASET_TEST_SPLIT)
         else:
             self.train_data_len = train_data_len
         # 判断是否传入了label字段
@@ -39,7 +39,7 @@ class RawTimeSeries(TimeSeries):
         return res
 
     def gen_table_name(self):
-        return self.ds_name + '@' + self.ts_name
+        return self.ds_name + DELIMITER + self.ts_name
 
     def save(self):
         save_ts_data(data=self.data, table_name=self.gen_table_name())
@@ -48,13 +48,13 @@ class RawTimeSeries(TimeSeries):
                                                                      'ts_name': self.ts_name,
                                                                      'train_data_len': self.train_data_len,
                                                                      'dim_num': self.dim_num},
-                       measurement='ts_meta')
+                       measurement=RAW_TIME_SERIES_MEASUREMENT)
 
     # TODO 尝试把这块儿写的漂亮一点，现在这个键值对儿重复了好多次
     @classmethod
     def load(cls, name):
         data = load_ts_data(name)
-        meta = load_meta_data({'name': name})
+        meta = load_meta_data(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'name': name})
         return cls(data=data, ds_name=meta['ds_name'], ts_name=meta['ts_name'], train_data_len=meta['train_data_len'])
 
     def get_test_data(self) -> (np.ndarray, np.ndarray):

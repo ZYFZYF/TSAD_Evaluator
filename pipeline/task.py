@@ -1,5 +1,6 @@
 # @Time    : 2022/3/3 21:51
 # @Author  : ZYF
+import logging
 from typing import Union
 
 import pandas as pd
@@ -14,7 +15,6 @@ from detector.predict import PredictMode
 from evaluate.evaluate import evaluate
 from threshold.threshold import Threshold
 from transform.transform import Transform
-from utils.log import logging
 
 
 def supervised_fit(time_series: RawTimeSeries, detector: Detector):
