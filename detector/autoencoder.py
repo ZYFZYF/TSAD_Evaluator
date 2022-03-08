@@ -65,7 +65,6 @@ class AutoEncoder(UnivariateDetector, UnsupervisedFit, OfflinePredict):
         self.optimizer = torch.optim.Adam(self.model.parameters())
         train_x = torch.tensor(
             [x[i:i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size + 1)])
-        print(train_x.shape)
         train_x = train_x
         train_x, val_x = train_test_split(train_x, shuffle=True)
         train_dataset = TensorDataset(train_x)

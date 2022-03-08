@@ -10,7 +10,6 @@ from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
 from data_prepare.result_time_series import ResultTimeSeries
-from detector.autoencoder import AutoEncoder
 from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode
@@ -161,7 +160,14 @@ if __name__ == '__main__':
     # print(dir(test_detector))
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
+    # from detector.autoencoder import AutoEncoder
+    #
+    # ae_detector = AutoEncoder(window_size=60, z_dim=10)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
 
-    ae_detector = AutoEncoder(window_size=60, z_dim=10)
+    from detector.lstm import LSTM
+
+    lstm_detector = LSTM(window_size=20, batch_size=1)
     test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
+    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
