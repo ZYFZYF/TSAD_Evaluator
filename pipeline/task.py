@@ -13,6 +13,7 @@ from data_prepare.result_time_series import ResultTimeSeries
 from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode
+from detector.random_detector import RandomDetector
 from evaluate.evaluate import evaluate
 from threshold.threshold import Threshold
 from transform.transform import Transform
@@ -156,15 +157,15 @@ class TaskExecutor:
 
 
 if __name__ == '__main__':
-    # test_detector = RandomDetector()
-    # print(dir(test_detector))
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
-    # from detector.autoencoder import AutoEncoder
-    #
-    # ae_detector = AutoEncoder(window_size=60, z_dim=10)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
+    test_detector = RandomDetector()
+    print(dir(test_detector))
+    test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
+    from detector.autoencoder import AutoEncoder
+
+    ae_detector = AutoEncoder(window_size=60, z_dim=10)
+    test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
 
     from detector.lstm import LSTM
 

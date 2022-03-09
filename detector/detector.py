@@ -11,7 +11,8 @@ class Detector:
         self.type = None
 
     def save(self, algo_name):
-        save_meta_data(measurement='detector_meta', tags={'name': algo_name}, fields={'fit_mode': self.fit_mode,
+        save_meta_data(measurement='detector_meta', tags={'name': algo_name}, fields={'detector_name': algo_name,
+                                                                                      'fit_mode': self.fit_mode,
                                                                                       'predict_mode': self.predict_mode,
                                                                                       'type': self.type})
 
