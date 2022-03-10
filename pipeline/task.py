@@ -166,14 +166,14 @@ if __name__ == '__main__':
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
 
-    # from detector.lstm import LSTM
-    #
-    # lstm_detector = LSTM(window_size=50, batch_size=16, hidden_size=100)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
+    from detector.lstm import LSTM
 
-    from detector.mlp import MLP
-
-    lstm_detector = MLP(window_size=20)
+    lstm_detector = LSTM(window_size=50, batch_size=16, hidden_size=10)
     test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
+
+    # from detector.mlp import MLP
+    #
+    # lstm_detector = MLP(window_size=20)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')

@@ -23,7 +23,7 @@ class MLPModel(torch.nn.Module):
 
 
 class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
-    def __init__(self, window_size, batch_size=32, epoch=2000, early_stop_epochs=20):
+    def __init__(self, window_size, batch_size=32, epoch=100, early_stop_epochs=5):
         super().__init__()
         self.window_size = window_size
         self.batch_size = batch_size
@@ -41,7 +41,7 @@ class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
 
     def fit(self, x: np.ndarray):
         self.model = MLPModel(input_size=self.window_size)
-        self.optimizer = torch.optim.Adam(self.model.parameters())
+        optimizer = torch.optim.Adam(self.model.parameters())
         train_x = torch.tensor([x[i:i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size)])
         train_y = torch.tensor([x[i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size)])
         min_train_loss = np.inf
@@ -54,10 +54,10 @@ class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
                 next_pred = self.model(value)
                 # print(value.shape, next_pred.shape, next_value.tolist(), next_pred.tolist())
                 loss = F.mse_loss(next_pred, next_value)
-                self.optimizer.zero_grad()
+                optimizer.zero_grad()
                 loss.backward()
                 train_loss.append(loss.item())
-                self.optimizer.step()
+                optimizer.step()
             train_loss = sum(train_loss) / len(train_loss)
             logging.info(f"Epoch[{epoch}/{self.epoch}] Predict Loss: {train_loss:.4f}")
             if train_loss < min_train_loss:
