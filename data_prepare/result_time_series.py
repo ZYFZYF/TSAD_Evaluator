@@ -14,7 +14,7 @@ class ResultTimeSeries(TimeSeries):
         self.ds_name = ds_name
         self.ts_name = ts_name
         self.detector_name = detector_name
-        for k, v in eval_result:
+        for k, v in eval_result.items():
             self.__dict__[k] = v
         print(get_meta_data(self))
 
