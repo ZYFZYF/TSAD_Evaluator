@@ -70,3 +70,9 @@ class RawTimeSeries(TimeSeries):
         return RawTimeSeries(data=self.data[[column_name, 'label']], ds_name=self.ds_name,
                              ts_name=self.ts_name + '_' + column_name,
                              train_data_len=self.train_data_len)
+
+    def is_univariate(self):
+        return self.dim_num == 1
+
+    def is_multivariate(self):
+        return self.dim_num > 1

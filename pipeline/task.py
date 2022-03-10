@@ -13,7 +13,6 @@ from data_prepare.result_time_series import ResultTimeSeries
 from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode
-from detector.random_detector import RandomDetector
 from evaluate.evaluate import evaluate
 from threshold.threshold import Threshold
 from transform.transform import Transform
@@ -34,7 +33,7 @@ def unwanted_fit(time_series: RawTimeSeries, detector: Detector):
 
 
 def offline_predict(time_series: RawTimeSeries, detector: Detector):
-    (data, label) = time_series.get_train_data()
+    (data, label) = time_series.get_test_data()
     return detector.predict(data)
 
 
@@ -157,18 +156,24 @@ class TaskExecutor:
 
 
 if __name__ == '__main__':
-    test_detector = RandomDetector()
-    print(dir(test_detector))
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
-    from detector.autoencoder import AutoEncoder
+    # test_detector = RandomDetector()
+    # print(dir(test_detector))
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
+    # from detector.autoencoder import AutoEncoder
+    #
+    # ae_detector = AutoEncoder(window_size=60, z_dim=10)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
 
-    ae_detector = AutoEncoder(window_size=60, z_dim=10)
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
+    # from detector.lstm import LSTM
+    #
+    # lstm_detector = LSTM(window_size=50, batch_size=16, hidden_size=100)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
 
-    from detector.lstm import LSTM
+    from detector.mlp import MLP
 
-    lstm_detector = LSTM(window_size=20, batch_size=16)
+    lstm_detector = MLP(window_size=20)
     test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
+    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
