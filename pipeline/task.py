@@ -13,7 +13,8 @@ from data_prepare.result_time_series import ResultTimeSeries
 from detector.detector import Detector, MultivariateDetector
 from detector.fit import FitMode
 from detector.predict import PredictMode
-from evaluate.evaluate import evaluate
+from detector.random_detector import RandomDetector
+from evaluate.eval import eval
 from threshold.threshold import Threshold
 from transform.transform import Transform
 
@@ -140,7 +141,7 @@ class TaskExecutor:
                 result_df[THRESHOLD_COLUMN] = th
             else:
                 th = None
-            eval_result = evaluate(test_score, ts.get_test_data()[1], th)
+            eval_result = eval(test_score, ts.get_test_data()[1], th)
             ResultTimeSeries(data=result_df, ds_name=ts.ds_name, ts_name=ts.ts_name,
                              detector_name=detector_name, eval_result=eval_result).save()
 
@@ -156,10 +157,10 @@ class TaskExecutor:
 
 
 if __name__ == '__main__':
-    # test_detector = RandomDetector()
-    # print(dir(test_detector))
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
+    test_detector = RandomDetector()
+    print(dir(test_detector))
+    test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
     # from detector.autoencoder import AutoEncoder
     #
     # ae_detector = AutoEncoder(window_size=60, z_dim=10)
@@ -172,8 +173,8 @@ if __name__ == '__main__':
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
 
-    from detector.mlp import MLP
-
-    lstm_detector = MLP(window_size=20)
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_2')
-    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    # from detector.mlp import MLP
+    #
+    # lstm_detector = MLP(window_size=20)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_2')
+    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')

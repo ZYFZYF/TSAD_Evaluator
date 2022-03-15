@@ -12,7 +12,7 @@ class MetricWithoutThreshold(abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def score(mcs, predict, label):
+    def score(mcs, predict: list[float], label: list[float]) -> float:
         ...
 
 
@@ -21,8 +21,55 @@ from evaluate.metric_with_threshold import F1
 
 class BestF1(MetricWithoutThreshold):
     @classmethod
-    def score(mcs, predict, label):
+    def score(mcs, predict: list[float], label: list[float]) -> float:
         return max([F1.score([1 if s > th else 0 for s in predict], label) for th in predict])
+
+
+class BestFpa(MetricWithoutThreshold):
+
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        best_f1_score = 0
+        n = len(label)
+        head = [0] * n
+        tail = [0] * n
+        le = 0
+        while le < n:
+            ri = le
+            while ri < n and label[ri] == 1:
+                ri += 1
+            for i in range(le, ri):
+                head[i] = le
+                tail[i] = ri
+            le = ri + 1
+        order = [i for i in range(n)]
+        order = sorted(order, key=lambda x: predict[x], reverse=True)
+        pred = [0] * n
+        TP = 0
+        TN = n - sum(label)
+        FN = sum(label)
+        FP = 0
+        for i in range(n):
+            post = order[i]
+            if pred[post] == 0:
+                if label[post] == 0:
+                    pred[post] = 1
+                    TN -= 1
+                    FP += 1
+                else:
+                    for j in range(head[post], tail[post]):
+                        if pred[j] == 0:
+                            pred[j] = 1
+                            TP += 1
+                            FN -= 1
+                        else:
+                            break
+            recall = 1.0 * TP / (TP + FN)
+            precision = 1.0 * TP / (TP + FP)
+            f1_score = 2.0 * recall * precision / (recall + precision + 1e-10)
+            if f1_score > best_f1_score:
+                best_f1_score = f1_score
+        return best_f1_score
 
 
 if __name__ == '__main__':
