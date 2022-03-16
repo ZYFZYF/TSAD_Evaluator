@@ -136,6 +136,8 @@ class TaskExecutor:
             if threshold is not None:
                 th = threshold.threshold(train_score, test_score)
                 result_df[THRESHOLD_COLUMN] = th
+            elif THRESHOLD_COLUMN in result_df.columns:
+                th = result_df[THRESHOLD_COLUMN].tolist()
             else:
                 th = None
             eval_result = eval(test_score, ts.get_test_data()[1], th)
