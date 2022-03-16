@@ -29,6 +29,10 @@ class StreamingPredict(Detector, metaclass=abc.ABCMeta):
         self.fit_mode = PredictMode.Stream
 
     @abc.abstractmethod
+    def init(self, x):
+        ...
+
+    @abc.abstractmethod
     def predict(self, x):
         ...
 

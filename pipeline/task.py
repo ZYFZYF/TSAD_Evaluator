@@ -11,60 +11,57 @@ from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
 from data_prepare.result_time_series import ResultTimeSeries
 from detector.detector import Detector, MultivariateDetector
-from detector.fit import FitMode
-from detector.predict import PredictMode
-from detector.random_detector import RandomDetector
+from detector.fit import FitMode, SupervisedFit, UnsupervisedFit
+from detector.predict import PredictMode, OfflinePredict, StreamingPredict, TriggerPredict
 from evaluate.eval import eval
 from threshold.threshold import Threshold
 from transform.transform import Transform
-
-
-def supervised_fit(time_series: RawTimeSeries, detector: Detector):
-    (data, label) = time_series.get_train_data()
-    return detector.fit(data, label)
-
-
-def unsupervised_fit(time_series: RawTimeSeries, detector: Detector):
-    (data, _) = time_series.get_train_data()
-    return detector.fit(data)
-
-
-def unwanted_fit(time_series: RawTimeSeries, detector: Detector):
-    return None
-
-
-def offline_predict(time_series: RawTimeSeries, detector: Detector):
-    (data, label) = time_series.get_test_data()
-    return detector.predict(data)
-
-
-def stream_predict(time_series: RawTimeSeries, detector: Detector):
-    # TODO 流式评估
-    ...
-
-
-def trigger_predict(time_series: RawTimeSeries, detector: Detector):
-    # TODO 触发式评估
-    ...
-
-
-fit_mode2executor = {
-    FitMode.Supervised: supervised_fit,
-    FitMode.Unsupervised: unsupervised_fit,
-    FitMode.Unwanted: unwanted_fit
-}
-
-predict_mode2executor = {
-    PredictMode.Offline: offline_predict,
-    PredictMode.Stream: stream_predict,
-    PredictMode.Trigger: trigger_predict
-}
+from utils.preprocess import sliding
 
 
 class TaskExecutor:
     @staticmethod
     def exec(data: Union[RawTimeSeries, Dataset, str], detector: Union[Detector, list[Detector]], detector_name: str,
-             transform: Transform = None, aggregate: Aggregate = None, threshold: Threshold = None):
+             transform: Transform = None, aggregate: Aggregate = None, threshold: Threshold = None,
+             streaming_batch_size=1):
+
+        def supervised_fit(raw_time_series: RawTimeSeries, supervised_fitter: SupervisedFit):
+            train_data, label = raw_time_series.get_train_data()
+            return supervised_fitter.fit(train_data, label)
+
+        def unsupervised_fit(raw_time_series: RawTimeSeries, unsupervised_fitter: UnsupervisedFit):
+            train_data, _ = raw_time_series.get_train_data()
+            return unsupervised_fitter.fit(train_data)
+
+        def unwanted_fit(raw_time_series: RawTimeSeries, unwanted_fitter: Detector):
+            return None
+
+        def offline_predict(raw_time_series: RawTimeSeries, offline_predictor: OfflinePredict):
+            test_data, _ = raw_time_series.get_test_data()
+            return offline_predictor.predict(test_data)
+
+        def stream_predict(raw_time_series: RawTimeSeries, stream_predictor: StreamingPredict):
+            train_data, _ = raw_time_series.get_train_data()
+            stream_predictor.init(train_data)
+            test_data, _ = raw_time_series.get_test_data()
+            return [stream_predictor.predict(x) for x in sliding(test_data, streaming_batch_size)]
+
+        def trigger_predict(raw_time_series: RawTimeSeries, trigger_predictor: TriggerPredict):
+            # TODO 触发式评估
+            ...
+
+        fit_mode2executor = {
+            FitMode.Supervised: supervised_fit,
+            FitMode.Unsupervised: unsupervised_fit,
+            FitMode.Unwanted: unwanted_fit
+        }
+
+        predict_mode2executor = {
+            PredictMode.Offline: offline_predict,
+            PredictMode.Stream: stream_predict,
+            PredictMode.Trigger: trigger_predict
+        }
+
         def run(ts: RawTimeSeries):
             fit_method = fit_mode2executor[detector.fit_mode]
             predict_method = predict_mode2executor[detector.predict_mode]
@@ -157,10 +154,10 @@ class TaskExecutor:
 
 
 if __name__ == '__main__':
-    test_detector = RandomDetector()
-    print(dir(test_detector))
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
+    # test_detector = RandomDetector()
+    # print(dir(test_detector))
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
+    # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
     # from detector.autoencoder import AutoEncoder
     #
     # ae_detector = AutoEncoder(window_size=60, z_dim=10)
@@ -173,8 +170,8 @@ if __name__ == '__main__':
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
 
-    # from detector.mlp import MLP
-    #
-    # lstm_detector = MLP(window_size=20)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_2')
-    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    from algorithm.mlp import MLP
+
+    lstm_detector = MLP(window_size=20)
+    test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
+    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
