@@ -50,6 +50,7 @@ class Dataset(metaclass=ABCMeta):
     def fetch_KPI(cls, path: str, name='KPI'):
         TS_NAME_COLUMN = 'KPI ID'
         # 初赛没有标签，因此只导入复赛
+        # 这块儿可能有问题，grafana看起来只有test数据集（一开始就有异常）
         all_train = pd.read_csv(f'{path}/Finals_dataset/phase2_train.csv')
         all_test = pd.read_hdf(f'{path}/Finals_dataset/phase2_ground_truth.hdf')
         all_test[TS_NAME_COLUMN] = [str(x) for x in all_test[TS_NAME_COLUMN]]

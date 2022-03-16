@@ -655,7 +655,7 @@ class biSPOT:
         self.data = np.append(self.data, data)
         return
 
-    def initialize(self, verbose=True):
+    def initialize(self, init_data=None, verbose=False):
         """
         Run the calibration (initialization) step
 
@@ -664,6 +664,8 @@ class biSPOT:
 	    verbose : bool
 		    (default = True) If True, gives details about the batch initialization
         """
+        if init_data is not None:
+            self.init_data = init_data
         n_init = self.init_data.size
 
         S = np.sort(self.init_data)  # we sort X to get the empirical quantile
@@ -978,6 +980,41 @@ class biSPOT:
             thdown.append(self.extreme_quantile['down'])  # thresholds record
 
         return {'upper_thresholds': thup, 'lower_thresholds': thdown, 'alarms': alarm}
+
+    def detect(self, x):
+        # If the observed value exceeds the current threshold (alarm case)
+        alarm = False
+        if x > self.extreme_quantile['up']:
+            alarm = True
+        # case where the value exceeds the initial threshold but not the alarm ones
+        elif x > self.init_threshold['up']:
+            # we add it in the peaks
+            self.peaks['up'] = np.append(self.peaks['up'], x - self.init_threshold['up'])
+            self.Nt['up'] += 1
+            self.n += 1
+            # and we update the thresholds
+
+            g, s, l = self._grimshaw('up')
+            self.extreme_quantile['up'] = self._quantile('up', g, s)
+
+        elif x < self.extreme_quantile['down']:
+            alarm = True
+        # case where the value exceeds the initial threshold but not the alarm ones
+        elif x < self.init_threshold['down']:
+            # we add it in the peaks
+            self.peaks['down'] = np.append(self.peaks['down'], -(x - self.init_threshold['down']))
+            self.Nt['down'] += 1
+            self.n += 1
+            # and we update the thresholds
+
+            g, s, l = self._grimshaw('down')
+            self.extreme_quantile['down'] = self._quantile('down', g, s)
+        else:
+            self.n += 1
+
+        return {'lower_threshold': self.extreme_quantile['down'],
+                'upper_threshold': self.extreme_quantile['up'],
+                'alarm': alarm}
 
     def plot(self, run_results, with_alarm=True):
         """

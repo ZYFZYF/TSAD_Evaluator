@@ -88,10 +88,10 @@ class TaskExecutor:
             def gen_result_df(real_ts: RawTimeSeries, dt: Detector, columns_prefix: str) -> (
                     pd.DataFrame, list[float], list[float]):
                 logging.info(f'running {dt.__class__.__name__} for {real_ts.ts_name} of {real_ts.ds_name}...')
-                df = parse(fit_method(time_series=real_ts, detector=dt), is_test=False)
+                df = parse(fit_method(real_ts, dt), is_test=False)
                 df.index = ts.data.index[:len(df)]
                 df.rename(columns={col: columns_prefix + col for col in df.columns}, inplace=True)
-                tf = parse(predict_method(time_series=real_ts, detector=dt), is_test=True)
+                tf = parse(predict_method(real_ts, dt), is_test=True)
                 tf.index = ts.data.index[-len(tf):]
                 tf.rename(columns={col: columns_prefix + col for col in tf.columns}, inplace=True)
                 return pd.concat([df, tf]), (
@@ -170,8 +170,13 @@ if __name__ == '__main__':
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
 
-    from algorithm.mlp import MLP
+    # from algorithm.mlp import MLP
+    #
+    # lstm_detector = MLP(window_size=20)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
+    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    from algorithm.evt import EVT
 
-    lstm_detector = MLP(window_size=20)
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
-    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    spot_detector = EVT()
+    test_ts = RawTimeSeries.load('Yahoo@synthetic_90')
+    TaskExecutor.exec(data=test_ts, detector=spot_detector, detector_name='test_evt')

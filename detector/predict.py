@@ -26,14 +26,14 @@ class OfflinePredict(Detector, metaclass=abc.ABCMeta):
 class StreamingPredict(Detector, metaclass=abc.ABCMeta):
     def __init__(self):
         super().__init__()
-        self.fit_mode = PredictMode.Stream
+        self.predict_mode = PredictMode.Stream
 
     @abc.abstractmethod
-    def init(self, x):
+    def init(self, x: np.ndarray):
         ...
 
     @abc.abstractmethod
-    def predict(self, x):
+    def predict(self, x: np.ndarray):
         ...
 
 
@@ -41,8 +41,8 @@ class TriggerPredict(Detector, metaclass=abc.ABCMeta):
 
     def __init__(self):
         super().__init__()
-        self.fit_mode = PredictMode.Trigger
+        self.predict_mode = PredictMode.Trigger
 
     @abc.abstractmethod
-    def predict(self, x):
+    def predict(self, x: np.ndarray):
         ...
