@@ -9,12 +9,12 @@ from utils.utils import get_meta_data
 
 
 class ResultTimeSeries(TimeSeries):
-    def __init__(self, data: pd.DataFrame, ds_name, ts_name, detector_name, eval_result):
+    def __init__(self, data: pd.DataFrame, ds_name, ts_name, detector_name, eval_result, cost_time):
         super(ResultTimeSeries, self).__init__(data)
         self.ds_name = ds_name
         self.ts_name = ts_name
         self.detector_name = detector_name
-        for k, v in eval_result.items():
+        for k, v in {**eval_result, **cost_time}.items():
             self.__dict__[k] = v
         print(get_meta_data(self))
 

@@ -3,10 +3,11 @@
 import logging
 from typing import Union
 
+import numpy as np
 import pandas as pd
 
 from aggregate.aggregate import Aggregate
-from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN
+from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
 from data_prepare.result_time_series import ResultTimeSeries
@@ -17,6 +18,7 @@ from evaluate.eval import eval
 from threshold.threshold import Threshold
 from transform.transform import Transform
 from utils.preprocess import sliding
+from utils.timer import timer, time_on, get_time
 
 
 class TaskExecutor:
@@ -24,28 +26,33 @@ class TaskExecutor:
     def exec(data: Union[RawTimeSeries, Dataset, str], detector: Union[Detector, list[Detector]], detector_name: str,
              transform: Transform = None, aggregate: Aggregate = None, threshold: Threshold = None,
              streaming_batch_size=1):
-
+        @timer(TRAIN_TIME)
         def supervised_fit(raw_time_series: RawTimeSeries, supervised_fitter: SupervisedFit):
             train_data, label = raw_time_series.get_train_data()
             return supervised_fitter.fit(train_data, label)
 
+        @timer(TRAIN_TIME)
         def unsupervised_fit(raw_time_series: RawTimeSeries, unsupervised_fitter: UnsupervisedFit):
             train_data, _ = raw_time_series.get_train_data()
             return unsupervised_fitter.fit(train_data)
 
+        @timer(TRAIN_TIME)
         def unwanted_fit(raw_time_series: RawTimeSeries, unwanted_fitter: Detector):
             return None
 
+        @timer(TEST_TIME)
         def offline_predict(raw_time_series: RawTimeSeries, offline_predictor: OfflinePredict):
             test_data, _ = raw_time_series.get_test_data()
             return offline_predictor.predict(test_data)
 
+        @timer(TEST_TIME)
         def stream_predict(raw_time_series: RawTimeSeries, stream_predictor: StreamingPredict):
             train_data, _ = raw_time_series.get_train_data()
             stream_predictor.init(train_data)
             test_data, _ = raw_time_series.get_test_data()
             return [stream_predictor.predict(x) for x in sliding(test_data, streaming_batch_size)]
 
+        @timer(TEST_TIME)
         def trigger_predict(raw_time_series: RawTimeSeries, trigger_predictor: TriggerPredict):
             # TODO 触发式评估
             ...
@@ -65,6 +72,7 @@ class TaskExecutor:
         def run(ts: RawTimeSeries):
             fit_method = fit_mode2executor[detector.fit_mode]
             predict_method = predict_mode2executor[detector.predict_mode]
+            time_on()
 
             def parse(result, is_test):
                 if result is None:
@@ -95,8 +103,8 @@ class TaskExecutor:
                 tf.index = ts.data.index[-len(tf):]
                 tf.rename(columns={col: columns_prefix + col for col in tf.columns}, inplace=True)
                 return pd.concat([df, tf]), (
-                    [] if ANOMALY_SCORE_COLUMN not in df.columns else df[ANOMALY_SCORE_COLUMN].tolist()), tf[
-                           ANOMALY_SCORE_COLUMN].tolist()
+                    [] if ANOMALY_SCORE_COLUMN not in df.columns else df[ANOMALY_SCORE_COLUMN].tolist()), np.array(tf[
+                                                                                                                       ANOMALY_SCORE_COLUMN].tolist())
 
             if not isinstance(detector, list):
                 detector.save(detector_name)
@@ -142,7 +150,7 @@ class TaskExecutor:
                 th = None
             eval_result = eval(test_score, ts.get_test_data()[1], th)
             ResultTimeSeries(data=result_df, ds_name=ts.ds_name, ts_name=ts.ts_name,
-                             detector_name=detector_name, eval_result=eval_result).save()
+                             detector_name=detector_name, eval_result=eval_result, cost_time=get_time()).save()
 
         if isinstance(data, RawTimeSeries):
             run(data)
@@ -172,13 +180,13 @@ if __name__ == '__main__':
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
 
-    # from algorithm.mlp import MLP
-    #
-    # lstm_detector = MLP(window_size=20)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
-    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
-    from algorithm.evt import EVT
+    from algorithm.mlp import MLP
 
-    spot_detector = EVT()
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_90')
-    TaskExecutor.exec(data=test_ts, detector=spot_detector, detector_name='test_evt')
+    lstm_detector = MLP(window_size=20)
+    test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
+    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    # from algorithm.evt import EVT
+    #
+    # spot_detector = EVT()
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_90')
+    # TaskExecutor.exec(data=test_ts, detector=spot_detector, detector_name='test_evt')

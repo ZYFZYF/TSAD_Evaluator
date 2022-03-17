@@ -23,3 +23,7 @@ THRESHOLD_COLUMN = 'threshold'
 # about input of time series
 DATETIME_COLUMN_NAMES = ['datetime']
 TIMESTAMP_COLUMN_NAMES = ['ts', 'timestamp']
+
+# about field of result
+TRAIN_TIME = 'TrainTime'
+TEST_TIME = 'TestTime'

@@ -7,6 +7,7 @@ from evaluate.metric_without_threshold import metric_without_threshold_list
 
 
 def eval(pred: np.ndarray, label: np.ndarray, threshold):
+    print(type(pred), type(label))
     if pred.shape[0] < label.shape[0]:
         pred = np.array([0.0] * (label.shape[0] - pred.shape[0]) + pred.tolist())
     if threshold is not None:
