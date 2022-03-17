@@ -3,10 +3,10 @@
 import logging
 from typing import Union
 
-import numpy as np
 import pandas as pd
 
-from aggregate.aggregate import Aggregate
+from aggregate.aggregate import Aggregate, MaxAggregate
+from algorithm.random_detector import RandomDetector
 from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
@@ -98,13 +98,13 @@ class TaskExecutor:
                 logging.info(f'running {dt.__class__.__name__} for {real_ts.ts_name} of {real_ts.ds_name}...')
                 df = parse(fit_method(real_ts, dt), is_test=False)
                 df.index = ts.data.index[:len(df)]
+                train_score_list = [] if ANOMALY_SCORE_COLUMN not in df.columns else df[ANOMALY_SCORE_COLUMN].tolist()
                 df.rename(columns={col: columns_prefix + col for col in df.columns}, inplace=True)
                 tf = parse(predict_method(real_ts, dt), is_test=True)
                 tf.index = ts.data.index[-len(tf):]
+                test_score_list = tf[ANOMALY_SCORE_COLUMN].tolist()
                 tf.rename(columns={col: columns_prefix + col for col in tf.columns}, inplace=True)
-                return pd.concat([df, tf]), (
-                    [] if ANOMALY_SCORE_COLUMN not in df.columns else df[ANOMALY_SCORE_COLUMN].tolist()), np.array(tf[
-                                                                                                                       ANOMALY_SCORE_COLUMN].tolist())
+                return pd.concat([df, tf]), train_score_list, test_score_list
 
             if not isinstance(detector, list):
                 detector.save(detector_name)
@@ -138,7 +138,7 @@ class TaskExecutor:
                         append(gen_result_df(real_ts=ts.get_column_data(column_name=col), dt=detector,
                                              columns_prefix=col + '_'))
                 if aggregate is None:
-                    raise ValueError('ensemble method should have a aggregate method')
+                    raise ValueError('ensemble method / univariate to multivariate should have a aggregate method')
                 train_score, test_score = aggregate.aggregate(train=train_score, test=test_score)
                 result_df[ANOMALY_SCORE_COLUMN] = train_score + test_score
             if threshold is not None:
@@ -148,7 +148,7 @@ class TaskExecutor:
                 th = result_df[THRESHOLD_COLUMN].tolist()
             else:
                 th = None
-            eval_result = eval(test_score, ts.get_test_data()[1], th)
+            eval_result = eval(test_score, ts.get_test_data()[1].tolist(), th)
             ResultTimeSeries(data=result_df, ds_name=ts.ds_name, ts_name=ts.ts_name,
                              detector_name=detector_name, eval_result=eval_result, cost_time=get_time()).save()
 
@@ -180,13 +180,27 @@ if __name__ == '__main__':
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
 
-    from algorithm.mlp import MLP
-
-    lstm_detector = MLP(window_size=20)
-    test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
-    TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
+    # from algorithm.mlp import MLP
+    #
+    # lstm_detector = MLP(window_size=20)
+    # test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
+    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
     # from algorithm.evt import EVT
     #
     # spot_detector = EVT()
     # test_ts = RawTimeSeries.load('Yahoo@synthetic_90')
     # TaskExecutor.exec(data=test_ts, detector=spot_detector, detector_name='test_evt')
+
+    # univariate to multivariate
+
+    test_detector = RandomDetector()
+    print(dir(test_detector))
+    test_ts = RawTimeSeries.load('SMD@machine-1-1')
+    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random_agg_max',
+                      aggregate=MaxAggregate())
+
+    # from algorithm.mlp import MLP
+    #
+    # lstm_detector = MLP(window_size=20)
+    # test_ts = RawTimeSeries.load('SMD@machine-1-1')
+    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp_agg_max')

@@ -19,10 +19,12 @@ DELIMITER = '@'
 # about detector result columns name
 ANOMALY_SCORE_COLUMN = 'score'
 THRESHOLD_COLUMN = 'threshold'
+LABEL_COLUMN = 'label'
 
 # about input of time series
 DATETIME_COLUMN_NAMES = ['datetime']
 TIMESTAMP_COLUMN_NAMES = ['ts', 'timestamp']
+LABEL_COLUMN_NAMES = ['label', 'anomaly', 'is_anomaly']
 
 # about field of result
 TRAIN_TIME = 'TrainTime'

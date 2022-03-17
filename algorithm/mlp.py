@@ -23,7 +23,7 @@ class MLPModel(torch.nn.Module):
 
 
 class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
-    def __init__(self, window_size, batch_size=32, epoch=100, early_stop_epochs=5):
+    def __init__(self, window_size, batch_size=32, epoch=10, early_stop_epochs=3):
         super().__init__()
         self.window_size = window_size
         self.batch_size = batch_size
@@ -43,7 +43,7 @@ class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
         self.model = MLPModel(input_size=self.window_size)
         optimizer = torch.optim.Adam(self.model.parameters())
         train_x = torch.tensor([x[i:i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size)])
-        train_y = torch.tensor([x[i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size)])
+        train_y = torch.tensor([x[i + self.window_size].tolist() for i in range(x.shape[0] - self.window_size)])
         min_train_loss = np.inf
         not_update_round = 0
         for epoch in range(self.epoch):
@@ -74,7 +74,7 @@ class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
         self.model.eval()
         result = [{ANOMALY_SCORE_COLUMN: 0.0, 'predict_value': x[i, 0]} for i in range(self.window_size)]
         train_x = torch.tensor([x[i:i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size)])
-        train_y = torch.tensor([x[i + self.window_size, 0].tolist() for i in range(x.shape[0] - self.window_size)])
+        train_y = torch.tensor([x[i + self.window_size].tolist() for i in range(x.shape[0] - self.window_size)])
         dataset = TensorDataset(train_x, train_y)
         data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False)
         for ind, (value, next_value) in enumerate(data_loader):

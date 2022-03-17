@@ -16,13 +16,31 @@ class MetricWithoutThreshold(abc.ABCMeta):
         ...
 
 
-from evaluate.metric_with_threshold import F1
-
-
 class BestF1(MetricWithoutThreshold):
     @classmethod
     def score(mcs, predict: list[float], label: list[float]) -> float:
-        return max([F1.score([1 if s > th else 0 for s in predict], label) for th in predict])
+        best_f1_score = 0
+        n = len(label)
+        order = [i for i in range(n)]
+        order = sorted(order, key=lambda x: predict[x], reverse=True)
+        TP = 0
+        TN = n - sum(label)
+        FN = sum(label)
+        FP = 0
+        for i in range(n):
+            post = order[i]
+            if label[post] == 0:
+                TN -= 1
+                FP += 1
+            else:
+                TP += 1
+                FN -= 1
+            recall = 1.0 * TP / (TP + FN)
+            precision = 1.0 * TP / (TP + FP)
+            f1_score = 2.0 * recall * precision / (recall + precision + 1e-10)
+            if f1_score > best_f1_score:
+                best_f1_score = f1_score
+        return best_f1_score
 
 
 class BestFpa(MetricWithoutThreshold):

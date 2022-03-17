@@ -3,7 +3,7 @@
 import abc
 
 
-class Transform(abc.ABCMeta):
+class Transform(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def transform(self, train: list[float], test: list[float]) -> (list[float], list[float]):
         ...

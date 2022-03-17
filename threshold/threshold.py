@@ -3,7 +3,7 @@
 import abc
 
 
-class Threshold(abc.ABCMeta):
+class Threshold(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def threshold(self, train: list[list[float]], test: list[list[float]]) -> list[float]:
         ...
