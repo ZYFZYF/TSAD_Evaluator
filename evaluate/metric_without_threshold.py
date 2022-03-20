@@ -2,6 +2,8 @@
 # @Author  : ZYF
 import abc
 
+from config import EPS
+
 metric_without_threshold_list = []
 
 
@@ -19,7 +21,7 @@ class MetricWithoutThreshold(abc.ABCMeta):
 class BestF1(MetricWithoutThreshold):
     @classmethod
     def score(mcs, predict: list[float], label: list[float]) -> float:
-        best_f1_score = 0
+        best_f1_score = 0.0
         n = len(label)
         order = [i for i in range(n)]
         order = sorted(order, key=lambda x: predict[x], reverse=True)
@@ -35,9 +37,9 @@ class BestF1(MetricWithoutThreshold):
             else:
                 TP += 1
                 FN -= 1
-            recall = 1.0 * TP / (TP + FN)
-            precision = 1.0 * TP / (TP + FP)
-            f1_score = 2.0 * recall * precision / (recall + precision + 1e-10)
+            recall = 1.0 * TP / (TP + FN + EPS)
+            precision = 1.0 * TP / (TP + FP + EPS)
+            f1_score = 2.0 * recall * precision / (recall + precision + EPS)
             if f1_score > best_f1_score:
                 best_f1_score = f1_score
         return best_f1_score
@@ -47,7 +49,7 @@ class BestFpa(MetricWithoutThreshold):
 
     @classmethod
     def score(mcs, predict: list[float], label: list[float]) -> float:
-        best_f1_score = 0
+        best_fpa_score = 0.0
         n = len(label)
         head = [0] * n
         tail = [0] * n
@@ -82,12 +84,12 @@ class BestFpa(MetricWithoutThreshold):
                             FN -= 1
                         else:
                             break
-            recall = 1.0 * TP / (TP + FN)
-            precision = 1.0 * TP / (TP + FP)
-            f1_score = 2.0 * recall * precision / (recall + precision + 1e-10)
-            if f1_score > best_f1_score:
-                best_f1_score = f1_score
-        return best_f1_score
+            recall = 1.0 * TP / (TP + FN + EPS)
+            precision = 1.0 * TP / (TP + FP + EPS)
+            f1_score = 2.0 * recall * precision / (recall + precision + EPS)
+            if f1_score > best_fpa_score:
+                best_fpa_score = f1_score
+        return best_fpa_score
 
 
 if __name__ == '__main__':

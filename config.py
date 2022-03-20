@@ -29,3 +29,6 @@ LABEL_COLUMN_NAMES = ['label', 'anomaly', 'is_anomaly']
 # about field of result
 TRAIN_TIME = 'TrainTime'
 TEST_TIME = 'TestTime'
+
+# about some math constants
+EPS = 1e-10

@@ -9,7 +9,6 @@ from config import ANOMALY_SCORE_COLUMN
 from detector.detector import UnivariateDetector
 from detector.fit import UnsupervisedFit
 from detector.predict import OfflinePredict
-from utils.utils import logging
 
 
 class MLPModel(torch.nn.Module):
@@ -59,7 +58,7 @@ class MLP(UnivariateDetector, UnsupervisedFit, OfflinePredict):
                 train_loss.append(loss.item())
                 optimizer.step()
             train_loss = sum(train_loss) / len(train_loss)
-            logging.info(f"Epoch[{epoch}/{self.epoch}] Predict Loss: {train_loss:.4f}")
+            # logging.info(f"Epoch[{epoch}/{self.epoch}] Predict Loss: {train_loss:.4f}")
             if train_loss < min_train_loss:
                 not_update_round = 0
                 min_train_loss = train_loss

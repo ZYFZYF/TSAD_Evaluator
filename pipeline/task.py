@@ -4,6 +4,7 @@ import logging
 from typing import Union
 
 import pandas as pd
+from tqdm import tqdm
 
 from aggregate.aggregate import Aggregate, MaxAggregate
 from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
@@ -133,7 +134,7 @@ class TaskExecutor:
                     for d in detector:
                         append(gen_result_df(real_ts=ts, dt=d, columns_prefix=d.name + '_'))
                 else:
-                    for col in ts.get_columns():
+                    for col in tqdm(ts.get_columns(), desc=f'\t Running every dim for {ts.ts_name}'):
                         append(gen_result_df(real_ts=ts.get_column_data(column_name=col), dt=detector,
                                              columns_prefix=col + '_'))
                 if aggregate is None:
@@ -158,7 +159,7 @@ class TaskExecutor:
                 dataset = Dataset.load(data)
             else:
                 dataset = data
-            for time_series in dataset.ts:
+            for time_series in tqdm(dataset.ts, desc=f'Running time series of {dataset.name}'):
                 run(time_series)
 
 

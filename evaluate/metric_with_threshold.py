@@ -4,6 +4,8 @@ import abc
 
 from sklearn.metrics import precision_score, recall_score, f1_score
 
+from config import EPS
+
 metric_with_threshold_list = []
 
 
@@ -66,10 +68,9 @@ class Fpa(MetricWithThreshold):
                 else:
                     FN += ri - le
                 le = ri
-        eps = 1e-10
-        recall = 1.0 * TP / (TP + FN + eps)
-        precision = 1.0 * TP / (TP + FP + eps)
-        return 2.0 * recall * precision / (recall + precision + eps)
+        recall = 1.0 * TP / (TP + FN + EPS)
+        precision = 1.0 * TP / (TP + FP + EPS)
+        return 2.0 * recall * precision / (recall + precision + EPS)
 
 
 if __name__ == '__main__':
