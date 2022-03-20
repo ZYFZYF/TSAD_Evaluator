@@ -9,7 +9,6 @@ from evaluate.metric_without_threshold import metric_without_threshold_list
 
 
 def eval(pred: list[float], label: list[float], threshold: Optional[list[float]]):
-    print(type(pred), type(label), len(pred), len(label))
     if len(pred) < len(label):
         pred = np.array([0.0] * (len(label) - len(pred)) + pred)
     if threshold is not None:

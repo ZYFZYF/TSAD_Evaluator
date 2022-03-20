@@ -107,11 +107,11 @@ if __name__ == '__main__':
     # smd.save()
     # for ts in smd2.ts:
     #     print(ts.ts_name, len(ts.data))
-    # yahoo = Dataset.fetch_Yahoo(
-    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
-    # yahoo.save()
-    kpi = Dataset.fetch_KPI('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/KPI/KPI-Anomaly-Detection-master')
-    kpi.save()
+    yahoo = Dataset.fetch_Yahoo(
+        '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
+    yahoo.save()
+    # kpi = Dataset.fetch_KPI('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/KPI/KPI-Anomaly-Detection-master')
+    # kpi.save()
     # skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
     # skab.save()
     # jump = Dataset.fetch_JumpStarter(

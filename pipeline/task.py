@@ -6,7 +6,6 @@ from typing import Union
 import pandas as pd
 
 from aggregate.aggregate import Aggregate, MaxAggregate
-from algorithm.random_detector import RandomDetector
 from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
@@ -193,14 +192,17 @@ if __name__ == '__main__':
 
     # univariate to multivariate
 
-    test_detector = RandomDetector()
-    print(dir(test_detector))
-    test_ts = RawTimeSeries.load('SMD@machine-1-1')
-    TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random_agg_max',
-                      aggregate=MaxAggregate())
+    # test_detector = RandomDetector()
+    # # test_ts = RawTimeSeries.load('SMD@machine-1-1')
+    # TaskExecutor.exec(data='SMD', detector=test_detector, detector_name='test_random_agg_max',
+    #                   aggregate=MaxAggregate())
+    # TaskExecutor.exec(data='SMD', detector=test_detector, detector_name='test_random_agg_mean',
+    #                   aggregate=MeanAggregate())
 
-    # from algorithm.mlp import MLP
-    #
-    # lstm_detector = MLP(window_size=20)
-    # test_ts = RawTimeSeries.load('SMD@machine-1-1')
-    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp_agg_max')
+    from algorithm.mlp import MLP
+
+    mlp_detector = MLP(window_size=20)
+    TaskExecutor.exec(data='Yahoo', detector=mlp_detector, detector_name='test_mlp')
+    TaskExecutor.exec(data='SMD', detector=mlp_detector, detector_name='test_mlp_agg_max', aggregate=MaxAggregate())
+    TaskExecutor.exec(data='JumpStarter', detector=mlp_detector, detector_name='test_mlp_agg_max',
+                      aggregate=MaxAggregate())

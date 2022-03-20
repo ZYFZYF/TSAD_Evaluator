@@ -11,7 +11,7 @@ def timer(stage):
         def wrapper(*args, **kwargs):
             time_start = time.time()
             result = fun(*args, **kwargs)
-            cost_time[stage] = time.time() - time_start
+            cost_time[stage] += time.time() - time_start
             return result
 
         return wrapper
