@@ -2,8 +2,10 @@
 # @Author  : ZYF
 import pandas as pd
 from influxdb import InfluxDBClient, DataFrameClient
+from tqdm import tqdm
 
-from config import INFLUXDB_HOST, INFLUXDB_PORT, INFLUXDB_USERNAME, INFLUXDB_PASSWORD, INFLUXDB_DBNAME
+from config import INFLUXDB_HOST, INFLUXDB_PORT, INFLUXDB_USERNAME, INFLUXDB_PASSWORD, INFLUXDB_DBNAME, \
+    DETECTOR_MEASUREMENT, RESULT_TIME_SERIES_MEASUREMENT
 
 client = InfluxDBClient(host=INFLUXDB_HOST,
                         port=INFLUXDB_PORT,
@@ -50,5 +52,13 @@ def query_field_of_tags(measurement: str, tags: dict, field: str):
                 measurement=measurement)]
 
 
+def clear_all_detect_result():
+    for measurement in tqdm(client.get_list_measurements()):
+        measurement_name = measurement['name']
+        if measurement_name in [DETECTOR_MEASUREMENT, RESULT_TIME_SERIES_MEASUREMENT] or len(
+                measurement_name.split('@')) == 3:
+            client.drop_measurement(measurement_name)
+
+
 if __name__ == '__main__':
-    pass
+    clear_all_detect_result()

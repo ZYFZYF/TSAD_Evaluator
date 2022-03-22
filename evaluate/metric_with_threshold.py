@@ -73,6 +73,35 @@ class Fpa(MetricWithThreshold):
         return 2.0 * recall * precision / (recall + precision + EPS)
 
 
+class Fc1(MetricWithThreshold):
+    @classmethod
+    def score(mcs, predict, label) -> float:
+        TP_t = 0
+        FP_t = 0
+        TP_e = 0
+        FN_e = 0
+        n = len(label)
+        le = 0
+        while le < n:
+            if label[le] == 0:
+                if predict[le] == 1:
+                    FP_t += 1
+                le += 1
+            else:
+                ri = le
+                while ri < n and label[ri] == 1:
+                    ri += 1
+                if sum(predict[le:ri]) > 0:
+                    TP_t += sum(predict[le:ri])
+                    TP_e += 1
+                else:
+                    FN_e += 1
+                le = ri
+        recall = 1.0 * TP_e / (TP_e + FN_e + EPS)
+        precision = 1.0 * TP_t / (TP_t + FP_t + EPS)
+        return 2.0 * recall * precision / (recall + precision + EPS)
+
+
 if __name__ == '__main__':
     x = [0, 1, 0, 1, 1, 0]
     y = [0, 1, 1, 1, 0, 1]

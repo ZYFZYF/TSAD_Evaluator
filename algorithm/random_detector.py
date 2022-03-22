@@ -9,7 +9,7 @@ from detector.fit import SupervisedFit
 from detector.predict import OfflinePredict
 
 
-class RandomDetector(SupervisedFit, UnivariateDetector, OfflinePredict):
+class Random(SupervisedFit, UnivariateDetector, OfflinePredict):
 
     def fit(self, x: np.ndarray, y: np.ndarray):
         return [random() for _ in range(x.shape[0])]

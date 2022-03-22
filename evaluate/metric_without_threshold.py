@@ -1,8 +1,10 @@
 # @Time    : 2022/3/10 23:38
 # @Author  : ZYF
 import abc
+import random
 
 from config import EPS
+from evaluate.metric_with_threshold import Fpa, Fc1
 
 metric_without_threshold_list = []
 
@@ -55,35 +57,34 @@ class BestFpa(MetricWithoutThreshold):
         tail = [0] * n
         le = 0
         while le < n:
+            while le < n and label[le] != 1:
+                le += 1
+            if le == n:
+                break
             ri = le
-            while ri < n and label[ri] == 1:
+            while ri + 1 < n and label[ri + 1] == 1:
                 ri += 1
-            for i in range(le, ri):
+            for i in range(le, ri + 1):
                 head[i] = le
                 tail[i] = ri
             le = ri + 1
         order = [i for i in range(n)]
         order = sorted(order, key=lambda x: predict[x], reverse=True)
-        pred = [0] * n
         TP = 0
         TN = n - sum(label)
         FN = sum(label)
         FP = 0
+        labeled_event = set()
         for i in range(n):
             post = order[i]
-            if pred[post] == 0:
-                if label[post] == 0:
-                    pred[post] = 1
-                    TN -= 1
-                    FP += 1
-                else:
-                    for j in range(head[post], tail[post]):
-                        if pred[j] == 0:
-                            pred[j] = 1
-                            TP += 1
-                            FN -= 1
-                        else:
-                            break
+            if label[post] == 0:
+                TN -= 1
+                FP += 1
+            else:
+                if (event := (head[post], tail[post])) not in labeled_event:
+                    labeled_event.add(event)
+                    TP += tail[post] - head[post] + 1
+                    FN -= tail[post] - head[post] + 1
             recall = 1.0 * TP / (TP + FN + EPS)
             precision = 1.0 * TP / (TP + FP + EPS)
             f1_score = 2.0 * recall * precision / (recall + precision + EPS)
@@ -92,9 +93,79 @@ class BestFpa(MetricWithoutThreshold):
         return best_fpa_score
 
 
+class TrivialBestFpa:
+    @classmethod
+    def score(cls, predict: list[float], label: list[float]) -> float:
+        return max([Fpa.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
+
+
+class BestFc1(MetricWithoutThreshold):
+
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        best_fc1_score = 0.0
+        n = len(label)
+        head = [0] * n
+        tail = [0] * n
+        event_count = 0
+        le = 0
+        while le < n:
+            while le < n and label[le] != 1:
+                le += 1
+            if le == n:
+                break
+            event_count += 1
+            ri = le
+            while ri + 1 < n and label[ri + 1] == 1:
+                ri += 1
+            for i in range(le, ri + 1):
+                head[i] = le
+                tail[i] = ri
+            le = ri + 1
+        order = [i for i in range(n)]
+        order = sorted(order, key=lambda x: predict[x], reverse=True)
+        TP_t = 0
+        FP_t = 0
+        TP_e = 0
+        FN_e = event_count
+        labeled_event = set()
+        for i in range(n):
+            post = order[i]
+            if label[post] == 0:
+                FP_t += 1
+            else:
+                if (event := (head[post], tail[post])) not in labeled_event:
+                    labeled_event.add(event)
+                    TP_e += 1
+                    FN_e -= 1
+                TP_t += 1
+            recall = 1.0 * TP_e / (TP_e + FN_e + EPS)
+            precision = 1.0 * TP_t / (TP_t + FP_t + EPS)
+            f1_score = 2.0 * recall * precision / (recall + precision + EPS)
+            if f1_score > best_fc1_score:
+                best_fc1_score = f1_score
+        return best_fc1_score
+
+
+class TrivialBestFc1:
+    @classmethod
+    def score(cls, predict: list[float], label: list[float]) -> float:
+        return max([Fc1.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
+
+
 if __name__ == '__main__':
     x = [0, 0.2, 0.3, 0.5, 0.6, 0.1]
     y = [0, 1, 1, 1, 0, 1]
     print(metric_without_threshold_list)
     for metric in metric_without_threshold_list:
         print(metric.__name__, metric.score(x, y))
+    for j in range(10):
+        x = [random.random() for i in range(1000)]
+        y = [0 if random.random() < 0.5 else 1 for i in range(1000)]
+        print(sum(y))
+        fast_best_fpa = BestFpa.score(x, y)
+        trivial_best_fpa = TrivialBestFpa.score(x, y)
+        assert (fast_best_fpa == trivial_best_fpa)
+        fast_best_fc1 = BestFc1.score(x, y)
+        trivial_best_fc1 = TrivialBestFc1.score(x, y)
+        assert (fast_best_fc1 == trivial_best_fc1)

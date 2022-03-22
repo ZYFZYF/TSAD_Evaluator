@@ -1,5 +1,6 @@
 # @Time    : 2022/2/23 16:21
 # @Author  : ZYF
+import json
 import os
 from abc import ABCMeta
 from glob import glob
@@ -88,6 +89,20 @@ class Dataset(metaclass=ABCMeta):
         return dataset
 
     @classmethod
+    def fetch_NAB(cls, path: str, name='NAB'):
+        # TODO 这label是给人用的？
+        dataset = Dataset(name)
+        labels = {}
+        for label_file in glob(f'{path}/labels/*/*.json') + glob(f'{path}/labels/*.json'):
+            labels[label_file] = json.load(open(label_file, 'r'))
+        for csv_file in glob(f'{path}/data/*/*.csv'):
+            ts_name = '/'.join(csv_file.split('/')[-2:])
+            for k, v in labels.items():
+                if ts_name in v:
+                    print(ts_name, k, v[ts_name])
+        return dataset
+
+    @classmethod
     def load(cls, name):
         ts_name_list = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': name},
                                            field='name')
@@ -107,9 +122,9 @@ if __name__ == '__main__':
     # smd.save()
     # for ts in smd2.ts:
     #     print(ts.ts_name, len(ts.data))
-    yahoo = Dataset.fetch_Yahoo(
-        '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
-    yahoo.save()
+    # yahoo = Dataset.fetch_Yahoo(
+    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
+    # yahoo.save()
     # kpi = Dataset.fetch_KPI('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/KPI/KPI-Anomaly-Detection-master')
     # kpi.save()
     # skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
@@ -119,3 +134,5 @@ if __name__ == '__main__':
     # jump.save()
     # ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # ts.save()
+    nab = Dataset.fetch_NAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/NAB/NAB-master')
+    # nab.save()

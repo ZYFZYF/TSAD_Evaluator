@@ -7,6 +7,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from aggregate.aggregate import Aggregate, MaxAggregate
+from algorithm.autoencoder import AutoEncoder
+from algorithm.evt import EVT
+from algorithm.lstm import LSTM
+from algorithm.mlp import MLP
+from algorithm.random_detector import Random
 from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
@@ -164,46 +169,21 @@ class TaskExecutor:
 
 
 if __name__ == '__main__':
-    # test_detector = RandomDetector()
-    # print(dir(test_detector))
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=test_detector, detector_name='test_random')
-    # from detector.autoencoder import AutoEncoder
-    #
-    # ae_detector = AutoEncoder(window_size=60, z_dim=10)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=ae_detector, detector_name='test_autoencoder')
-
-    # from detector.lstm import LSTM
-    #
-    # lstm_detector = LSTM(window_size=50, batch_size=16, hidden_size=10)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_lstm')
-
-    # from algorithm.mlp import MLP
-    #
-    # lstm_detector = MLP(window_size=20)
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_11')
-    # TaskExecutor.exec(data=test_ts, detector=lstm_detector, detector_name='test_mlp')
-    # from algorithm.evt import EVT
-    #
-    # spot_detector = EVT()
-    # test_ts = RawTimeSeries.load('Yahoo@synthetic_90')
-    # TaskExecutor.exec(data=test_ts, detector=spot_detector, detector_name='test_evt')
-
-    # univariate to multivariate
-
-    # test_detector = RandomDetector()
-    # # test_ts = RawTimeSeries.load('SMD@machine-1-1')
-    # TaskExecutor.exec(data='SMD', detector=test_detector, detector_name='test_random_agg_max',
-    #                   aggregate=MaxAggregate())
-    # TaskExecutor.exec(data='SMD', detector=test_detector, detector_name='test_random_agg_mean',
-    #                   aggregate=MeanAggregate())
-
-    from algorithm.mlp import MLP
-
-    mlp_detector = MLP(window_size=20)
-    TaskExecutor.exec(data='Yahoo', detector=mlp_detector, detector_name='test_mlp')
-    TaskExecutor.exec(data='SMD', detector=mlp_detector, detector_name='test_mlp_agg_max', aggregate=MaxAggregate())
-    TaskExecutor.exec(data='JumpStarter', detector=mlp_detector, detector_name='test_mlp_agg_max',
-                      aggregate=MaxAggregate())
+    for detector in [
+        Random(),
+        EVT(),
+        MLP(window_size=30),
+        AutoEncoder(window_size=30, z_dim=10),
+        LSTM(window_size=30, batch_size=16, hidden_size=10)
+    ]:
+        for dataset in ['Yahoo']:
+            try:
+                TaskExecutor.exec(data=dataset, detector=detector, detector_name=detector.__class__.__name__)
+            except Exception as e:
+                print(e, detector.__class__.__name__, dataset)
+        for dataset in ['SMD', 'JumpStarter', 'SKAB']:
+            try:
+                TaskExecutor.exec(data='SMD', detector=detector, detector_name=f'Max{detector.__class__.__name__}',
+                                  aggregate=MaxAggregate())
+            except Exception as e:
+                print(e, detector.__class__.__name__, dataset)
