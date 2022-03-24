@@ -57,6 +57,7 @@ def clear_all_detect_result():
         measurement_name = measurement['name']
         if measurement_name in [DETECTOR_MEASUREMENT, RESULT_TIME_SERIES_MEASUREMENT] or len(
                 measurement_name.split('@')) == 3:
+            client.query(f"drop series from \"{measurement_name}\"")
             client.drop_measurement(measurement_name)
 
 

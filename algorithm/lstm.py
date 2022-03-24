@@ -26,7 +26,7 @@ class LSTMModel(torch.nn.Module):
 
 
 class LSTM(UnivariateDetector, UnsupervisedFit, OfflinePredict):
-    def __init__(self, window_size, hidden_size=100, batch_size=32, epoch=100, early_stop_epochs=5):
+    def __init__(self, window_size, hidden_size=100, batch_size=32, epoch=10, early_stop_epochs=3):
         super().__init__()
         self.window_size = window_size
         self.batch_size = batch_size
@@ -91,7 +91,7 @@ class LSTM(UnivariateDetector, UnsupervisedFit, OfflinePredict):
             for i in range(value.shape[0]):
                 predict = self.scaler.inverse_transform([[next_pred[i].item()]])[0][0]
                 label = self.scaler.inverse_transform([[next_value[i].item()]])[0][0]
-                print(next_pred[i].item(), predict, abs((predict - label).item()))
+                # print(next_pred[i].item(), predict, abs((predict - label).item()))
                 result.append({ANOMALY_SCORE_COLUMN: abs(predict - label),
                                'predict_value': predict})
         return result

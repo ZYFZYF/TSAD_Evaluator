@@ -2,13 +2,14 @@
 # @Author  : ZYF
 import json
 import os
+import pickle
 from abc import ABCMeta
 from glob import glob
 
 import pandas as pd
 from tqdm import tqdm
 
-from config import RAW_TIME_SERIES_MEASUREMENT
+from config import RAW_TIME_SERIES_MEASUREMENT, LABEL_COLUMN
 from data_prepare.raw_time_series import RawTimeSeries
 from database.influxdbtool import query_field_of_tags
 
@@ -50,17 +51,17 @@ class Dataset(metaclass=ABCMeta):
     @classmethod
     def fetch_KPI(cls, path: str, name='KPI'):
         TS_NAME_COLUMN = 'KPI ID'
-        # 初赛没有标签，因此只导入复赛
-        # 这块儿可能有问题，grafana看起来只有test数据集（一开始就有异常）
+        dataset = Dataset(name)
+        # 初赛数据（已有论文均不评估预赛数据集，说是58条序列，实际上是29条，train和test分别是前半部分和后半部分
+        # 复赛数据，分为train和test，但是都有异常，包括train
         all_train = pd.read_csv(f'{path}/Finals_dataset/phase2_train.csv')
         all_test = pd.read_hdf(f'{path}/Finals_dataset/phase2_ground_truth.hdf')
         all_test[TS_NAME_COLUMN] = [str(x) for x in all_test[TS_NAME_COLUMN]]
         ts_name_list = list(set(all_train[TS_NAME_COLUMN].tolist()))
-        dataset = Dataset(name)
         for ts_name in tqdm(iterable=sorted(ts_name_list), desc=f'Reading {name}'):
             train = all_train[all_train[TS_NAME_COLUMN] == ts_name].drop(columns=[TS_NAME_COLUMN])
             test = all_test[all_test[TS_NAME_COLUMN] == ts_name].drop(columns=[TS_NAME_COLUMN])
-            print(ts_name, len(train), len(test))
+            print(ts_name, len(train), len(test), train.values[-1], test.values[0])
             dataset.ts.append(RawTimeSeries.union(train=train, test=test, ds_name=name, ts_name=ts_name))
         return dataset
 
@@ -103,6 +104,17 @@ class Dataset(metaclass=ABCMeta):
         return dataset
 
     @classmethod
+    def fetch_Industry(cls, path: str, name='Industry'):
+        data = pickle.load(open(f'{path}/data/industry/industry_data_dict.pkl', 'rb'))
+        dataset = Dataset(name)
+        for ts_name, values in data.items():
+            df = pd.DataFrame(data=values)
+            df.rename(columns={'values': 'value', 'labels': LABEL_COLUMN}, inplace=True)
+            print(ts_name, len(df))
+            dataset.ts.append(RawTimeSeries(data=df, ds_name=name, ts_name=ts_name))
+        return dataset
+
+    @classmethod
     def load(cls, name):
         ts_name_list = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': name},
                                            field='name')
@@ -134,5 +146,7 @@ if __name__ == '__main__':
     # jump.save()
     # ts = RawTimeSeries.load('Yahoo@synthetic_1')
     # ts.save()
-    nab = Dataset.fetch_NAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/NAB/NAB-master')
+    # nab = Dataset.fetch_NAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/NAB/NAB-master')
     # nab.save()
+    industry = Dataset.fetch_Industry('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Industry/ADSketch-main')
+    industry.save()

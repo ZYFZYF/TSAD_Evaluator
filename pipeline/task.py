@@ -7,11 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from aggregate.aggregate import Aggregate, MaxAggregate
-from algorithm.autoencoder import AutoEncoder
-from algorithm.evt import EVT
 from algorithm.lstm import LSTM
-from algorithm.mlp import MLP
-from algorithm.random_detector import Random
 from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
@@ -170,20 +166,20 @@ class TaskExecutor:
 
 if __name__ == '__main__':
     for detector in [
-        Random(),
-        EVT(),
-        MLP(window_size=30),
-        AutoEncoder(window_size=30, z_dim=10),
+        # Random(),
+        # EVT(),
+        # MLP(window_size=30),
+        # AutoEncoder(window_size=30, z_dim=10),
         LSTM(window_size=30, batch_size=16, hidden_size=10)
     ]:
-        for dataset in ['Yahoo']:
+        for dataset in ['Yahoo', 'KPI']:
             try:
                 TaskExecutor.exec(data=dataset, detector=detector, detector_name=detector.__class__.__name__)
             except Exception as e:
                 print(e, detector.__class__.__name__, dataset)
         for dataset in ['SMD', 'JumpStarter', 'SKAB']:
             try:
-                TaskExecutor.exec(data='SMD', detector=detector, detector_name=f'Max{detector.__class__.__name__}',
+                TaskExecutor.exec(data=dataset, detector=detector, detector_name=f'Max{detector.__class__.__name__}',
                                   aggregate=MaxAggregate())
             except Exception as e:
                 print(e, detector.__class__.__name__, dataset)
