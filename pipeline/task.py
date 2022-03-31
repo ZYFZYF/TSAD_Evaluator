@@ -7,7 +7,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from aggregate.aggregate import Aggregate, MaxAggregate
-from algorithm.lstm import LSTM
+from algorithm.matrix_profile import MatrixProfile
+from algorithm.sr import SR
 from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
@@ -89,9 +90,9 @@ class TaskExecutor:
                                 raise ValueError('must have a key named score')
                             dataframe = pd.DataFrame.from_records(result)
                         else:
-                            raise ValueError('element of list must be float or dict')
+                            raise ValueError(f'element of list must be float or dict! get {type(result[0])}')
                     else:
-                        raise ValueError('result must be dataframe or list!')
+                        raise ValueError(f'result must be dataframe or list! get {type(result)}')
                 return dataframe
 
             def gen_result_df(real_ts: RawTimeSeries, dt: Detector, columns_prefix: str) -> (
@@ -164,22 +165,47 @@ class TaskExecutor:
                 run(time_series)
 
 
-if __name__ == '__main__':
-    for detector in [
-        # Random(),
-        # EVT(),
-        # MLP(window_size=30),
-        # AutoEncoder(window_size=30, z_dim=10),
-        LSTM(window_size=30, batch_size=16, hidden_size=10)
-    ]:
-        for dataset in ['Yahoo', 'KPI']:
+def run_univariate_algorithm(algorithms, univariate_datasets, multivariate_datasets):
+    for detector in algorithms:
+        for dataset in univariate_datasets:
             try:
                 TaskExecutor.exec(data=dataset, detector=detector, detector_name=detector.__class__.__name__)
             except Exception as e:
                 print(e, detector.__class__.__name__, dataset)
-        for dataset in ['SMD', 'JumpStarter', 'SKAB']:
+        for dataset in multivariate_datasets:
             try:
                 TaskExecutor.exec(data=dataset, detector=detector, detector_name=f'Max{detector.__class__.__name__}',
                                   aggregate=MaxAggregate())
             except Exception as e:
                 print(e, detector.__class__.__name__, dataset)
+
+
+def test_mp():
+    for batch_size in [20, 50, 100, 200]:
+        mp_detector = MatrixProfile(batch_size)
+        raw_time_series = RawTimeSeries.load("Yahoo@synthetic_1")
+        TaskExecutor.exec(raw_time_series, detector=mp_detector, detector_name=f"test_mp_{batch_size}")
+
+
+def test_sr():
+    sr_detector = SR()
+    raw_time_series = RawTimeSeries.load("Yahoo@synthetic_1")
+    TaskExecutor.exec(raw_time_series, detector=sr_detector, detector_name=f"test_sr")
+
+
+if __name__ == '__main__':
+    # run_univariate_algorithm(algorithms=[
+    #     # Random(),
+    #     # EVT(),
+    #     # MLP(window_size=30),
+    #     # AutoEncoder(window_size=30, z_dim=10),
+    #     LSTM(window_size=30, batch_size=16, hidden_size=10)
+    # ],
+    #     univariate_datasets=['Yahoo', 'KPI'],
+    #     multivariate_datasets=['SMD', 'JumpStarter', 'SKAB'])
+    # test_mp()
+    # test_sr()
+    run_univariate_algorithm(algorithms=[MatrixProfile(20),
+                                         SR()],
+                             univariate_datasets=[],  # ['Yahoo', 'Industry'],
+                             multivariate_datasets=['SMD', 'JumpStarter', 'SKAB'])
