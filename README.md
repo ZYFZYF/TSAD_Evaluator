@@ -28,3 +28,7 @@
         - TNNLR 2021
         - AAAI 2022
         - 触发式算法的评估
+
+    - 打包成docker
+        - 配置grafana
+        - 配置influxdb

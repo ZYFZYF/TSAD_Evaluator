@@ -19,5 +19,4 @@ class MatrixProfile(UnivariateDetector, UnsupervisedFit, OfflinePredict):
         self.train_data = x[:, 0].tolist()
 
     def predict(self, x: np.ndarray):
-        return stumpy.stump(self.train_data + x[:, 0].tolist(), self.window_size)[len(self.train_data):, 0].tolist() + [
-            0] * (self.window_size - 1)
+        return stumpy.stump(x[:, 0].tolist(), self.window_size)[:, 0].tolist() + [0] * (self.window_size - 1)

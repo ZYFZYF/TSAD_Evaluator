@@ -61,7 +61,6 @@ class Dataset(metaclass=ABCMeta):
         for ts_name in tqdm(iterable=sorted(ts_name_list), desc=f'Reading {name}'):
             train = all_train[all_train[TS_NAME_COLUMN] == ts_name].drop(columns=[TS_NAME_COLUMN])
             test = all_test[all_test[TS_NAME_COLUMN] == ts_name].drop(columns=[TS_NAME_COLUMN])
-            print(ts_name, len(train), len(test), train.values[-1], test.values[0])
             dataset.ts.append(RawTimeSeries.union(train=train, test=test, ds_name=name, ts_name=ts_name))
         return dataset
 
@@ -129,24 +128,10 @@ class Dataset(metaclass=ABCMeta):
 
 
 if __name__ == '__main__':
-    # smd = Dataset.fetch_SMD(
-    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SMD/OmniAnomaly-master/ServerMachineDataset')
-    # smd.save()
-    # for ts in smd2.ts:
-    #     print(ts.ts_name, len(ts.data))
-    # yahoo = Dataset.fetch_Yahoo(
-    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Yahoo/ydata-labeled-time-series-anomalies-v1_0')
-    # yahoo.save()
-    # kpi = Dataset.fetch_KPI('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/KPI/KPI-Anomaly-Detection-master')
-    # kpi.save()
-    # skab = Dataset.fetch_SKAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/SKAB/SKAB-master')
-    # skab.save()
-    # jump = Dataset.fetch_JumpStarter(
-    #     '/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/JumpStarter/JumpStarter-main')
-    # jump.save()
-    # ts = RawTimeSeries.load('Yahoo@synthetic_1')
-    # ts.save()
-    # nab = Dataset.fetch_NAB('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/NAB/NAB-master')
-    # nab.save()
-    industry = Dataset.fetch_Industry('/Users/zhaoyunfeng/Desktop/实验室/智能运维/TSAD_Evaluator/data/Industry/ADSketch-main')
-    industry.save()
+    Dataset.fetch_SMD('../data/SMD/OmniAnomaly-master/ServerMachineDataset').save()
+    Dataset.fetch_SKAB('../data/SKAB/SKAB-master').save()
+    Dataset.fetch_JumpStarter('../data/JumpStarter/JumpStarter-main').save()
+    # Dataset.fetch_NAB('../data/NAB/NAB-master').save()
+    Dataset.fetch_Industry('../data/Industry/ADSketch-main').save()
+    Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
+    Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()

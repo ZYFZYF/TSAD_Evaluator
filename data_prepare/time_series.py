@@ -10,7 +10,7 @@ from config import DATETIME_COLUMN_NAMES, TIMESTAMP_COLUMN_NAMES
 class TimeSeries(object):
     def __init__(self, data: pd.DataFrame):
         super(TimeSeries, self).__init__()
-        self.data = data.astype(float).copy(deep=True)
+        self.data = data.copy(deep=True)
         # 判断是否有时间索引
         if not isinstance(self.data.index, pd.DatetimeIndex):
             for ts_column in DATETIME_COLUMN_NAMES:
@@ -33,6 +33,7 @@ class TimeSeries(object):
                              for
                              ts in timestamp]
                 self.data.index = pd.to_datetime(timestamp, unit='s')
+        self.data = self.data.astype(float).copy(deep=True)
 
     @abc.abstractmethod
     def gen_table_name(self):
