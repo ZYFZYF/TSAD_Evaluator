@@ -9,6 +9,7 @@ from tqdm import tqdm
 from aggregate.aggregate import Aggregate, MaxAggregate
 from algorithm.autoencoder import AutoEncoder
 from algorithm.evt import EVT
+from algorithm.ksigma import KSigma
 from algorithm.lstm import LSTM
 from algorithm.matrix_profile import MatrixProfile
 from algorithm.mlp import MLP
@@ -66,7 +67,9 @@ class TaskExecutor:
             # 直接在这一步将结果转成dataframe
             detect_ranges = raw_time_series.select_detect_range(window_size=window_size, anomaly_ratio=anomaly_ratio,
                                                                 is_disjoint=True)
+            train_data, _ = raw_time_series.get_train_data()
             test_data, _ = raw_time_series.get_test_data()
+            history_data = np.r_[train_data, test_data]
             detect_task = {i[0]: i for i in detect_ranges}
             test_timestamp = raw_time_series.get_test_timestamp()
             result = []
@@ -79,7 +82,9 @@ class TaskExecutor:
                     @timer(PULL_TIME)
                     def pull_data(points: int) -> np.ndarray:
                         # TODO 改成真正从数据库拉数据
-                        return test_data[interval[1] - points: interval[1] + 1, :]
+                        return history_data[
+                               raw_time_series.train_data_len + interval[1] - points: raw_time_series.train_data_len +
+                                                                                      interval[1] + 1, :]
 
                     rs = trigger_predictor.predict(pull_data)
                     if not isinstance(rs, dict):
@@ -210,7 +215,8 @@ class TaskExecutor:
                 run(time_series)
 
 
-def run_univariate_algorithm(algorithms, univariate_datasets, multivariate_datasets):
+def run_univariate_algorithm(algorithms, univariate_datasets=['Yahoo', 'KPI', 'Industry'],
+                             multivariate_datasets=['SMD', 'JumpStarter', 'SKAB']):
     for detector in algorithms:
         for dataset in univariate_datasets:
             try:
@@ -245,6 +251,12 @@ def test_metric():
     TaskExecutor.exec("Yahoo", detector=MLP(window_size=30), detector_name='test_mlp')
 
 
+def test_ksigma():
+    random_trigger = KSigma()
+    raw_time_series = RawTimeSeries.load("Yahoo@synthetic_1")
+    TaskExecutor.exec(raw_time_series, detector=random_trigger, detector_name=f"test_ksgima")
+
+
 def test_trigger():
     random_trigger = RandomTrigger()
     raw_time_series = RawTimeSeries.load("Yahoo@synthetic_1")
@@ -268,7 +280,9 @@ if __name__ == '__main__':
     # test_metric()
     # test_mp()
     # test_sr()
-    test_trigger()
+    # test_trigger()
+    # test_ksigma()
+    run_univariate_algorithm([KSigma()])
     # run_univariate_algorithm(algorithms=[MatrixProfile(20),
     #                                      SR()],
     #                          univariate_datasets=[],  # ['Yahoo', 'Industry'],
