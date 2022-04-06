@@ -32,3 +32,8 @@
     - 打包成docker
         - 配置grafana
         - 配置influxdb
+
+## PROCESS
+
+    - 2022.4.6
+        - 发现一个bug：当运行整个数据集的时候对某个ts给出的结果和单跑ts给出的结果不一致（grafana配置不对）

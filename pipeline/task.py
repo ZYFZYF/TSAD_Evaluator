@@ -3,6 +3,7 @@
 import logging
 from typing import Union
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from aggregate.aggregate import Aggregate, MaxAggregate
@@ -12,8 +13,10 @@ from algorithm.lstm import LSTM
 from algorithm.matrix_profile import MatrixProfile
 from algorithm.mlp import MLP
 from algorithm.random_detector import Random
+from algorithm.random_trigger import RandomTrigger
 from algorithm.sr import SR
-from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME
+from config import ANOMALY_SCORE_COLUMN, THRESHOLD_COLUMN, TRAIN_TIME, TEST_TIME, PULL_TIME, LABEL_COLUMN, \
+    TIME_END_COLUMN, NO_NEED_TO_RENAME_COLUMNS
 from data_prepare.dataset import Dataset
 from data_prepare.raw_time_series import RawTimeSeries
 from data_prepare.result_time_series import ResultTimeSeries
@@ -30,8 +33,8 @@ from utils.timer import timer, time_on, get_time
 class TaskExecutor:
     @staticmethod
     def exec(data: Union[RawTimeSeries, Dataset, str], detector: Union[Detector, list[Detector]], detector_name: str,
-             transform: Transform = None, aggregate: Aggregate = None, threshold: Threshold = None,
-             streaming_batch_size=1):
+             transform: Transform = None, aggregate: Aggregate = MaxAggregate(), threshold: Threshold = None,
+             streaming_batch_size=1, window_size=20, anomaly_ratio=0.10):
         @timer(TRAIN_TIME)
         def supervised_fit(raw_time_series: RawTimeSeries, supervised_fitter: SupervisedFit):
             train_data, label = raw_time_series.get_train_data()
@@ -60,8 +63,32 @@ class TaskExecutor:
 
         @timer(TEST_TIME)
         def trigger_predict(raw_time_series: RawTimeSeries, trigger_predictor: TriggerPredict):
-            # TODO 触发式评估
-            ...
+            # 直接在这一步将结果转成dataframe
+            detect_ranges = raw_time_series.select_detect_range(window_size=window_size, anomaly_ratio=anomaly_ratio,
+                                                                is_disjoint=True)
+            test_data, _ = raw_time_series.get_test_data()
+            detect_task = {i[0]: i for i in detect_ranges}
+            test_timestamp = raw_time_series.get_test_timestamp()
+            result = []
+            for i in range(len(test_data)):
+                if i not in detect_task:
+                    result.append({})
+                else:
+                    interval = detect_task[i]
+
+                    @timer(PULL_TIME)
+                    def pull_data(points: int) -> np.ndarray:
+                        # TODO 改成真正从数据库拉数据
+                        return test_data[interval[1] - points: interval[1] + 1, :]
+
+                    rs = trigger_predictor.predict(pull_data)
+                    if not isinstance(rs, dict):
+                        rs = {ANOMALY_SCORE_COLUMN: rs}
+                    # rs['timeBegin'] = test_timestamp[interval[0]]
+                    rs[TIME_END_COLUMN] = test_timestamp[interval[1]] // (10 ** 6)
+                    rs[LABEL_COLUMN] = interval[2]
+                    result.append(rs)
+            return pd.DataFrame.from_records(result)
 
         fit_mode2executor = {
             FitMode.Supervised: supervised_fit,
@@ -105,11 +132,15 @@ class TaskExecutor:
                 df = parse(fit_method(real_ts, dt), is_test=False)
                 df.index = ts.data.index[:len(df)]
                 train_score_list = [] if ANOMALY_SCORE_COLUMN not in df.columns else df[ANOMALY_SCORE_COLUMN].tolist()
-                df.rename(columns={col: columns_prefix + col for col in df.columns}, inplace=True)
+                df.rename(
+                    columns={col: columns_prefix + col for col in df.columns if col not in NO_NEED_TO_RENAME_COLUMNS},
+                    inplace=True)
                 tf = parse(predict_method(real_ts, dt), is_test=True)
                 tf.index = ts.data.index[-len(tf):]
                 test_score_list = tf[ANOMALY_SCORE_COLUMN].tolist()
-                tf.rename(columns={col: columns_prefix + col for col in tf.columns}, inplace=True)
+                tf.rename(
+                    columns={col: columns_prefix + col for col in tf.columns if col not in NO_NEED_TO_RENAME_COLUMNS},
+                    inplace=True)
                 return pd.concat([df, tf]), train_score_list, test_score_list
 
             if not isinstance(detector, list):
@@ -147,6 +178,7 @@ class TaskExecutor:
                     raise ValueError('ensemble method / univariate to multivariate should have a aggregate method')
                 train_score, test_score = aggregate.aggregate(train=train_score, test=test_score)
                 result_df[ANOMALY_SCORE_COLUMN] = train_score + test_score
+                result_df = result_df.loc[:, ~result_df.columns.duplicated()]
             if threshold is not None:
                 th = threshold.threshold(train_score, test_score)
                 result_df[THRESHOLD_COLUMN] = th
@@ -154,7 +186,16 @@ class TaskExecutor:
                 th = result_df[THRESHOLD_COLUMN].tolist()
             else:
                 th = None
-            eval_result = eval(test_score, ts.get_test_data()[1].tolist(), th)
+            if isinstance(detector, TriggerPredict):
+                for column in result_df.columns:
+                    if column.endswith(LABEL_COLUMN):
+                        eval_result = eval(test_score, result_df[column].tolist(), th)
+                        break
+                else:
+                    logging.info(f"Can not find label for {detector_name} of {ts.ts_name}")
+                    eval_result = {}
+            else:
+                eval_result = eval(test_score, ts.get_test_data()[1].tolist(), th)
             ResultTimeSeries(data=result_df, ds_name=ts.ds_name, ts_name=ts.ts_name,
                              detector_name=detector_name, eval_result=eval_result, cost_time=get_time()).save()
 
@@ -197,20 +238,37 @@ def test_sr():
     TaskExecutor.exec(raw_time_series, detector=sr_detector, detector_name=f"test_sr")
 
 
+def test_metric():
+    TaskExecutor.exec(RawTimeSeries.load("Yahoo@synthetic_1"), detector=MLP(window_size=30),
+                      detector_name='test_mlp_once')
+
+    TaskExecutor.exec("Yahoo", detector=MLP(window_size=30), detector_name='test_mlp')
+
+
+def test_trigger():
+    random_trigger = RandomTrigger()
+    raw_time_series = RawTimeSeries.load("Yahoo@synthetic_1")
+    TaskExecutor.exec(raw_time_series, detector=random_trigger, detector_name=f"test_random_trigger")
+    raw_time_series = RawTimeSeries.load("SMD@machine-1-1")
+    TaskExecutor.exec(raw_time_series, detector=random_trigger, detector_name=f"max_test_random_trigger")
+
+
 if __name__ == '__main__':
-    run_univariate_algorithm(algorithms=[
-        Random(),
-        EVT(),
-        MatrixProfile(),
-        SR(),
-        MLP(window_size=30),
-        AutoEncoder(window_size=30, z_dim=10),
-        LSTM(window_size=30, batch_size=16, hidden_size=10)
-    ],
-        univariate_datasets=['Yahoo', 'KPI'],
-        multivariate_datasets=['SMD', 'JumpStarter', 'SKAB'])
+    # run_univariate_algorithm(algorithms=[
+    #     Random(),
+    #     EVT(),
+    #     MatrixProfile(),
+    #     SR(),
+    #     MLP(window_size=30),
+    #     AutoEncoder(window_size=30, z_dim=10),
+    #     LSTM(window_size=30, batch_size=16, hidden_size=10)
+    # ],
+    #     univariate_datasets=['Yahoo', 'KPI'],
+    #     multivariate_datasets=['SMD', 'JumpStarter', 'SKAB'])
+    # test_metric()
     # test_mp()
     # test_sr()
+    test_trigger()
     # run_univariate_algorithm(algorithms=[MatrixProfile(20),
     #                                      SR()],
     #                          univariate_datasets=[],  # ['Yahoo', 'Industry'],

@@ -5,6 +5,7 @@ import abc
 import numpy as np
 
 from detector.detector import Detector
+from typing import Callable
 
 
 class PredictMode:
@@ -44,5 +45,5 @@ class TriggerPredict(Detector, metaclass=abc.ABCMeta):
         self.predict_mode = PredictMode.Trigger
 
     @abc.abstractmethod
-    def predict(self, x: np.ndarray):
+    def predict(self, dataFetcher: Callable[[int], np.ndarray]):
         ...

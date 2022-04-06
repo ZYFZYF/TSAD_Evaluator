@@ -1,5 +1,7 @@
 # @Time    : 2022/2/27 19:56
 # @Author  : ZYF
+import random
+
 import numpy as np
 import pandas as pd
 
@@ -76,3 +78,48 @@ class RawTimeSeries(TimeSeries):
 
     def is_multivariate(self):
         return self.dim_num > 1
+
+    # TODO 保证单个序列每次选出来的区间一致
+    def select_detect_range(self, window_size: int, anomaly_ratio: float, is_disjoint: bool) -> list[(int, int, int)]:
+        random.seed(hash(self.ds_name))
+        test_label = self.test_df[LABEL_COLUMN].values
+        candidate = set(list(range(0, len(test_label) - window_size)))
+
+        def remove(k):
+            if is_disjoint:
+                for n in range(k - window_size, k + window_size + 1):
+                    candidate.discard(n)
+            else:
+                candidate.discard(k)
+
+        detect_range_list = []
+        i, j = 0, 0
+        while i + window_size < len(test_label):
+            if test_label[i] == 1:
+                le = i - random.randint(1, window_size // 2)
+                detect_range_list.append((le, le + window_size - 1, 1))
+                remove(le)
+                for j in range(i - window_size, i + 1):
+                    candidate.discard(j)
+                while i + window_size < len(test_label) and test_label[i + 1] == 1:
+                    i += 1
+                    candidate.discard(i)
+            i += 1
+        anomaly_range_cnt = len(detect_range_list)
+        for i in range(int(anomaly_range_cnt * (1.0 - anomaly_ratio) / anomaly_ratio)):
+            le = random.sample(candidate, 1)[0]
+            remove(le)
+            if len(candidate) == 0:
+                break
+            detect_range_list.append((le, le + window_size - 1, 0))
+        return sorted(detect_range_list, key=lambda x: x[0])
+
+    def get_test_timestamp(self):
+        return self.test_df.index.values.astype(np.int64)
+
+
+if __name__ == '__main__':
+    ts = RawTimeSeries.load('Yahoo@A3Benchmark-TS15')
+    print(ts.select_detect_range(10, 0.1, True))
+    print(ts.select_detect_range(10, 0.05, False))
+    print(ts.get_test_timestamp())

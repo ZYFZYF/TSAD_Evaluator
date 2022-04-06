@@ -20,6 +20,8 @@ DELIMITER = '@'
 ANOMALY_SCORE_COLUMN = 'score'
 THRESHOLD_COLUMN = 'threshold'
 LABEL_COLUMN = 'label'
+TIME_END_COLUMN = 'timeEnd'
+NO_NEED_TO_RENAME_COLUMNS = [LABEL_COLUMN, TIME_END_COLUMN]
 
 # about input of time series
 DATETIME_COLUMN_NAMES = ['datetime']
@@ -29,6 +31,7 @@ LABEL_COLUMN_NAMES = ['label', 'anomaly', 'is_anomaly']
 # about field of result
 TRAIN_TIME = 'TrainTime'
 TEST_TIME = 'TestTime'
+PULL_TIME = 'PullTime'
 
 # about some math constants
 EPS = 1e-10
