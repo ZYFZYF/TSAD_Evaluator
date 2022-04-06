@@ -69,8 +69,9 @@ class Dataset(metaclass=ABCMeta):
         dataset = Dataset(name)
         for csv_file in tqdm(iterable=sorted(glob(f'{path}/data/*/*.csv')), desc=f'Reading {name}'):
             ts_name = '-'.join(csv_file.split('/')[-2:]).split('.')[0]
-            data = pd.read_csv(csv_file, sep=';')
-            dataset.ts.append(RawTimeSeries(data=data, ds_name=name, ts_name=ts_name))
+            if ts_name != 'anomaly-free-anomaly-free':
+                data = pd.read_csv(csv_file, sep=';')
+                dataset.ts.append(RawTimeSeries(data=data, ds_name=name, ts_name=ts_name))
         return dataset
 
     @classmethod
@@ -128,10 +129,10 @@ class Dataset(metaclass=ABCMeta):
 
 
 if __name__ == '__main__':
-    Dataset.fetch_SMD('../data/SMD/OmniAnomaly-master/ServerMachineDataset').save()
+    # Dataset.fetch_SMD('../data/SMD/OmniAnomaly-master/ServerMachineDataset').save()
     Dataset.fetch_SKAB('../data/SKAB/SKAB-master').save()
-    Dataset.fetch_JumpStarter('../data/JumpStarter/JumpStarter-main').save()
+    # Dataset.fetch_JumpStarter('../data/JumpStarter/JumpStarter-main').save()
     # Dataset.fetch_NAB('../data/NAB/NAB-master').save()
-    Dataset.fetch_Industry('../data/Industry/ADSketch-main').save()
-    Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
-    Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()
+    # Dataset.fetch_Industry('../data/Industry/ADSketch-main').save()
+    # Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
+    # Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()

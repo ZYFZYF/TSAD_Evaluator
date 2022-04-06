@@ -142,7 +142,7 @@ class TaskExecutor:
                     inplace=True)
                 tf = parse(predict_method(real_ts, dt), is_test=True)
                 tf.index = ts.data.index[-len(tf):]
-                test_score_list = tf[ANOMALY_SCORE_COLUMN].tolist()
+                test_score_list = [] if ANOMALY_SCORE_COLUMN not in tf.columns else tf[ANOMALY_SCORE_COLUMN].tolist()
                 tf.rename(
                     columns={col: columns_prefix + col for col in tf.columns if col not in NO_NEED_TO_RENAME_COLUMNS},
                     inplace=True)
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     # test_sr()
     # test_trigger()
     # test_ksigma()
-    run_univariate_algorithm([KSigma()])
+    run_univariate_algorithm([KSigma()], univariate_datasets=[], multivariate_datasets=['SKAB'])
     # run_univariate_algorithm(algorithms=[MatrixProfile(20),
     #                                      SR()],
     #                          univariate_datasets=[],  # ['Yahoo', 'Industry'],
