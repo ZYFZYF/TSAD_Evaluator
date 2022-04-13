@@ -1,0 +1,208 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 6,
+  "iteration": 1649386240640,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "uh8hRgUnk"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "hidden",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "maxPerRow": 4,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom"
+        },
+        "orientation": "vertical",
+        "showValue": "auto",
+        "stacking": "none",
+        "text": {},
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "8.0.6",
+      "repeat": "metric",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "query": "select last(detector_name), mean($metric) from result_ts_meta where \"ds_name\" = '$dataset' and \"detector_name\" =~ /$detector/ group by detector_name",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table"
+        }
+      ],
+      "title": "$metric",
+      "transparent": true,
+      "type": "barchart"
+    }
+  ],
+  "schemaVersion": 35,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "SMD",
+          "value": "SMD"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "uh8hRgUnk"
+        },
+        "definition": "select  ds_name from (select *  from result_ts_meta)",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "dataset",
+        "options": [],
+        "query": "select  ds_name from (select *  from result_ts_meta)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "MaxAutoEncoder",
+          "value": "MaxAutoEncoder"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "uh8hRgUnk"
+        },
+        "definition": "select  detector_name from (select * from result_ts_meta where \"ds_name\" = '$dataset')",
+        "hide": 0,
+        "includeAll": false,
+        "multi": true,
+        "name": "detector",
+        "options": [],
+        "query": "select  detector_name from (select * from result_ts_meta where \"ds_name\" = '$dataset')",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "BestF1",
+            "BestFpa",
+            "TestTime",
+            "TrainTime"
+          ],
+          "value": [
+            "BestF1",
+            "BestFpa",
+            "TestTime",
+            "TrainTime"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "uh8hRgUnk"
+        },
+        "definition": "show field keys from \"result_ts_meta\"",
+        "hide": 0,
+        "includeAll": false,
+        "multi": true,
+        "name": "metric",
+        "options": [],
+        "query": "show field keys from \"result_ts_meta\"",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "数据集结果对比",
+  "uid": "zdiHqhE7k",
+  "version": 1,
+  "weekStart": ""
+}

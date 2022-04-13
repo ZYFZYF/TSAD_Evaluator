@@ -115,6 +115,36 @@ class Dataset(metaclass=ABCMeta):
         return dataset
 
     @classmethod
+    def fetch_UCR(cls, path: str, name='UCR'):
+        data_dir = f'{path}/UCR_TimeSeriesAnomalyDatasets2021/FilesAreInHere/UCR_Anomaly_FullData'
+        dataset = Dataset(name)
+
+        for ts_file in tqdm(sorted(os.listdir(data_dir))):
+            content_split = ts_file.split('.')[0].split('_')
+            ts_name = '_'.join(content_split[:-3])
+            train_data_len = int(content_split[-3])
+            df = pd.read_csv(f'{data_dir}/{ts_file}', names=['value'])
+            if len(df) == 1:
+                df = pd.DataFrame(
+                    data={'value': [float(val.strip()) for val in
+                                    open(f'{data_dir}/{ts_file}', 'r').readlines()[0].split(' ') if
+                                    len(val.strip()) > 0]})
+            anomaly_start, anomaly_end = int(content_split[-2]), int(content_split[-1])
+            df['label'] = [1 if anomaly_start <= i <= anomaly_end else 0 for i in range(1, len(df) + 1)]
+            dataset.ts.append(RawTimeSeries(data=df, ds_name=name, ts_name=ts_name, train_data_len=train_data_len))
+        return dataset
+
+    @classmethod
+    def fetch_TODS(cls, path: str, name='TODS'):
+        data_dir = f'{path}/benchmark/synthetic/unidataset'
+        dataset = Dataset(name)
+        for ts_file in tqdm(sorted(os.listdir(data_dir))):
+            ts_name = '.'.join(ts_file.split('.')[:-1]).replace('.', '_')
+            df = pd.read_csv(f'{data_dir}/{ts_file}')
+            dataset.ts.append(RawTimeSeries(data=df, ds_name=name, ts_name=ts_name))
+        return dataset
+
+    @classmethod
     def load(cls, name):
         ts_name_list = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': name},
                                            field='name')
@@ -130,9 +160,11 @@ class Dataset(metaclass=ABCMeta):
 
 if __name__ == '__main__':
     # Dataset.fetch_SMD('../data/SMD/OmniAnomaly-master/ServerMachineDataset').save()
-    Dataset.fetch_SKAB('../data/SKAB/SKAB-master').save()
+    # Dataset.fetch_SKAB('../data/SKAB/SKAB-master').save()
     # Dataset.fetch_JumpStarter('../data/JumpStarter/JumpStarter-main').save()
     # Dataset.fetch_NAB('../data/NAB/NAB-master').save()
     # Dataset.fetch_Industry('../data/Industry/ADSketch-main').save()
     # Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
     # Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()
+    # Dataset.fetch_UCR('../data/UCR/AnomalyDatasets_2021').save()
+    Dataset.fetch_TODS('../data/TODS/tods-benchmark').save()
