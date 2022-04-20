@@ -145,6 +145,18 @@ class Dataset(metaclass=ABCMeta):
         return dataset
 
     @classmethod
+    def fetch_PSM(cls, path: str, name='PSM'):
+        dataset = Dataset(name)
+        ts_name = name
+        train = pd.read_csv(f'{path}/data/train.csv')
+        train['label'] = 0
+        test = pd.read_csv(f'{path}/data/test.csv')
+        label_df = pd.read_csv(f'{path}/data/test_label.csv')
+        test['label'] = label_df['label']
+        dataset.ts.append(RawTimeSeries.union(train=train, test=test, ds_name=name, ts_name=ts_name))
+        return dataset
+
+    @classmethod
     def load(cls, name):
         ts_name_list = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': name},
                                            field='name')
@@ -167,4 +179,5 @@ if __name__ == '__main__':
     # Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
     # Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()
     # Dataset.fetch_UCR('../data/UCR/AnomalyDatasets_2021').save()
-    Dataset.fetch_TODS('../data/TODS/tods-benchmark').save()
+    # Dataset.fetch_TODS('../data/TODS/tods-benchmark').save()
+    Dataset.fetch_PSM('../data/PSM/RANSynCoders-main').save()
