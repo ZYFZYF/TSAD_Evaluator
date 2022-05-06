@@ -39,7 +39,7 @@ class F1(MetricWithThreshold):
         return f1_score(label, predict)
 
 
-class Fpa(MetricWithThreshold):
+class Fpa1(MetricWithThreshold):
 
     @classmethod
     def score(mcs, predict, label) -> float:
