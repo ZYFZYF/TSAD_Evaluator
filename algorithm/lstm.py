@@ -22,7 +22,10 @@ class LSTMModel(torch.nn.Module):
 
     def forward(self, x):
         output, _ = self.lstm(x)
-        return self.linear(output[:, -1:, :])
+        ret = self.linear(output[:, -1, :])
+        print(output.shape, ret.shape)
+        return ret
+        # return self.linear(output[:, -1:, :])
 
 
 class LSTM(UnivariateDetector, UnsupervisedFit, OfflinePredict):

@@ -21,4 +21,6 @@ class KSigma(UnwantedFit, UnivariateDetector, TriggerPredict):
         train_mean = np.mean(train_data)
         train_std = np.std(train_data)
         fixed_std = max(train_std, max(0.01 * train_mean, 1e-3))
-        return min(100, max([(i - train_mean) / fixed_std for i in test_data]))
+        return {'score': min(100, max([(i - train_mean) / fixed_std for i in test_data])),
+                'mean': train_mean,
+                'std': fixed_std}

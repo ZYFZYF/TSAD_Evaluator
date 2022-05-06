@@ -265,6 +265,12 @@ def test_trigger():
     TaskExecutor.exec(raw_time_series, detector=random_trigger, detector_name=f"max_test_random_trigger")
 
 
+def test_lstm():
+    lstm_detector = LSTM(window_size=30)
+    raw_time_series = RawTimeSeries.load("Yahoo@synthetic_1")
+    TaskExecutor.exec(raw_time_series, detector=lstm_detector, detector_name=f"test_lstm")
+
+
 if __name__ == '__main__':
     # run_univariate_algorithm(algorithms=[
     #     Random(),
@@ -278,11 +284,13 @@ if __name__ == '__main__':
     #     univariate_datasets=['Yahoo', 'KPI'],
     #     multivariate_datasets=['SMD', 'JumpStarter', 'SKAB'])
     # test_metric()
+    # test_lstm()
     # test_mp()
     # test_sr()
     # test_trigger()
     # test_ksigma()
-    run_univariate_algorithm([KSigma()], univariate_datasets=[], multivariate_datasets=['SKAB'])
+    run_univariate_algorithm([SR()], univariate_datasets=['UCR'], multivariate_datasets=[])
+    # run_univariate_algorithm([KSigma()], univariate_datasets=['Yahoo'], multivariate_datasets=[])
     # run_univariate_algorithm(algorithms=[MatrixProfile(20),
     #                                      SR()],
     #                          univariate_datasets=[],  # ['Yahoo', 'Industry'],

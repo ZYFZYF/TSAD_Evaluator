@@ -4,7 +4,7 @@ import abc
 import random
 
 from config import EPS
-from evaluate.metric_with_threshold import Fpa, Fc1
+from evaluate.metric_with_threshold import Fpa, Fc1, F1
 
 metric_without_threshold_list = []
 
@@ -93,12 +93,6 @@ class BestFpa(MetricWithoutThreshold):
         return best_fpa_score
 
 
-class TrivialBestFpa:
-    @classmethod
-    def score(cls, predict: list[float], label: list[float]) -> float:
-        return max([Fpa.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
-
-
 class BestFc1(MetricWithoutThreshold):
 
     @classmethod
@@ -147,6 +141,18 @@ class BestFc1(MetricWithoutThreshold):
         return best_fc1_score
 
 
+class TrivialBestF1:
+    @classmethod
+    def score(cls, predict: list[float], label: list[float]) -> float:
+        return max([F1.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
+
+
+class TrivialBestFpa:
+    @classmethod
+    def score(cls, predict: list[float], label: list[float]) -> float:
+        return max([Fpa.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
+
+
 class TrivialBestFc1:
     @classmethod
     def score(cls, predict: list[float], label: list[float]) -> float:
@@ -159,13 +165,32 @@ if __name__ == '__main__':
     print(metric_without_threshold_list)
     for metric in metric_without_threshold_list:
         print(metric.__name__, metric.score(x, y))
-    for j in range(10):
-        x = [random.random() for i in range(1000)]
-        y = [0 if random.random() < 0.5 else 1 for i in range(1000)]
-        print(sum(y))
-        fast_best_fpa = BestFpa.score(x, y)
-        trivial_best_fpa = TrivialBestFpa.score(x, y)
-        assert (fast_best_fpa == trivial_best_fpa)
-        fast_best_fc1 = BestFc1.score(x, y)
-        trivial_best_fc1 = TrivialBestFc1.score(x, y)
-        assert (fast_best_fc1 == trivial_best_fc1)
+    for j in range(20):
+        N = 1000
+        R = 0.1
+        x = [random.random() for i in range(N)]
+        if j < 10:
+            y = [0 if random.random() > R else 1 for i in range(N)]
+            print(f"随机分布的异常，异常点数{sum(y)}/{N}")
+        else:
+            num = random.randint(1, 6)
+            M = int(N * R / num)
+            y = [0 for i in range(N)]
+            for i in range(num):
+                while True:
+                    j = random.randint(0, N)
+                    if j > 0 and j + M < N and y[j - 1] == 0 and y[j + M] == 0:
+                        for k in range(j, j + M):
+                            y[k] = 1
+                        break
+            print(f"尽可能长的异常，异常点数{sum(y)}/{N}，分成{num}段，每段{M}个点")
+
+
+        def make_sure_equal(raw_result, fast_result):
+            print(raw_result, fast_result)
+            assert abs(raw_result - fast_result) < 1e-5
+
+
+        make_sure_equal(TrivialBestF1.score(x, y), BestF1.score(x, y))
+        make_sure_equal(TrivialBestFpa.score(x, y), BestFpa.score(x, y))
+        make_sure_equal(TrivialBestFc1.score(x, y), BestFc1.score(x, y))
