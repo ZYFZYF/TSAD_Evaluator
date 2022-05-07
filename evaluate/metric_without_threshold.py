@@ -4,8 +4,8 @@ import abc
 import random
 from typing import Generator
 
-from config import EPS
-from evaluate.metric_with_threshold import Fpa1, Fc1, F1
+from evaluate.utils import safeFloatDivide, getPRF, extractEvent
+from evaluate.metric_with_threshold import Fpa1, Fc1, F1, Fd1
 
 metric_without_threshold_list = []
 
@@ -19,42 +19,6 @@ class MetricWithoutThreshold(abc.ABCMeta):
     @abc.abstractmethod
     def score(mcs, predict: list[float], label: list[float]) -> float:
         ...
-
-
-def safeFloatDivide(a, b):
-    if b == 0:
-        return 0
-    else:
-        return 1.0 * a / b
-
-
-def getPRF(TP, FP, FN) -> tuple[float, float, float]:
-    precision = safeFloatDivide(TP, TP + FP)
-    recall = safeFloatDivide(TP, TP + FN)
-    f1_score = safeFloatDivide(recall * precision * 2, recall + precision)
-    return precision, recall, f1_score
-
-
-def extractEvent(label: list[float]) -> tuple[list[int], list[int], int]:
-    n = len(label)
-    count = 0
-    le = 0
-    head = [0] * n
-    tail = [0] * n
-    while le < n:
-        while le < n and label[le] != 1:
-            le += 1
-        if le == n:
-            break
-        count += 1
-        ri = le
-        while ri + 1 < n and label[ri + 1] == 1:
-            ri += 1
-        for i in range(le, ri + 1):
-            head[i] = le
-            tail[i] = ri
-        le = ri + 1
-    return head, tail, count
 
 
 class ScoreSearcher(abc.ABCMeta):
@@ -98,19 +62,6 @@ def areaUnder(score: list[tuple[float, float]]) -> float:
     return area
 
 
-class BestF1(MetricWithoutThreshold):
-
-    @classmethod
-    def score(mcs, predict: list[float], label: list[float]) -> float:
-        return max([score[2] for score in SearchF1.searchAllThreshold(predict, label)])
-
-
-class AUPRC(MetricWithoutThreshold):
-    @classmethod
-    def score(mcs, predict: list[float], label: list[float]) -> float:
-        return areaUnder([(r, p) for p, r, _ in SearchF1.searchAllThreshold(predict, label)])
-
-
 class SearchFpa1(ScoreSearcher):
     @classmethod
     def getScore(mcs, predict: list[float], label: list[float]) -> Generator[tuple, int, None]:
@@ -129,19 +80,6 @@ class SearchFpa1(ScoreSearcher):
                     labeled_event.add(event)
                     TP += event[1] - event[0] + 1
                     FN -= event[1] - event[0] + 1
-
-
-class BestFpa1(MetricWithoutThreshold):
-
-    @classmethod
-    def score(mcs, predict: list[float], label: list[float]) -> float:
-        return max([score[2] for score in SearchFpa1.searchAllThreshold(predict, label)])
-
-
-class AUPRCpa(MetricWithoutThreshold):
-    @classmethod
-    def score(mcs, predict: list[float], label: list[float]) -> float:
-        return areaUnder([(r, p) for p, r, _ in SearchFpa1.searchAllThreshold(predict, label)])
 
 
 class SearchFc1(ScoreSearcher):
@@ -169,16 +107,80 @@ class SearchFc1(ScoreSearcher):
                 TP_t += 1
 
 
+class SearchFd1(ScoreSearcher):
+    @classmethod
+    def getScore(mcs, predict: list[float], label: list[float]) -> Generator[tuple, int, None]:
+        head, tail, event_count = extractEvent(label)
+        TP = 0
+        FP = 0
+        delay = dict()
+        sumDelay = event_count * 1.0
+        for i in head:
+            if i != -1:
+                delay[i] = 1
+        while True:
+            recall = safeFloatDivide(event_count - sumDelay, event_count)
+            precision = safeFloatDivide(TP, TP + FP)
+            f1_score = safeFloatDivide(recall * precision * 2, recall + precision)
+            leftMaxIndex = yield precision, recall, f1_score
+            if label[leftMaxIndex] == 0:
+                FP += 1
+            else:
+                TP += 1
+                d = (leftMaxIndex - head[leftMaxIndex]) / (tail[leftMaxIndex] - head[leftMaxIndex] + 1)
+                if d < delay[head[leftMaxIndex]]:
+                    sumDelay += d - delay[head[leftMaxIndex]]
+                    delay[head[leftMaxIndex]] = d
+
+
+class BestF1(MetricWithoutThreshold):
+
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        return max([score[2] for score in SearchF1.searchAllThreshold(predict, label)])
+
+
+class BestFpa1(MetricWithoutThreshold):
+
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        return max([score[2] for score in SearchFpa1.searchAllThreshold(predict, label)])
+
+
 class BestFc1(MetricWithoutThreshold):
     @classmethod
     def score(mcs, predict: list[float], label: list[float]) -> float:
         return max([score[2] for score in SearchFc1.searchAllThreshold(predict, label)])
 
 
+class BestFd1(MetricWithoutThreshold):
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        return max([score[2] for score in SearchFd1.searchAllThreshold(predict, label)])
+
+
+class AUPRC(MetricWithoutThreshold):
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        return areaUnder([(r, p) for p, r, _ in SearchF1.searchAllThreshold(predict, label)])
+
+
+class AUPRCpa(MetricWithoutThreshold):
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        return areaUnder([(r, p) for p, r, _ in SearchFpa1.searchAllThreshold(predict, label)])
+
+
 class AUPRCc(MetricWithoutThreshold):
     @classmethod
     def score(mcs, predict: list[float], label: list[float]) -> float:
         return areaUnder([(r, p) for p, r, _ in SearchFc1.searchAllThreshold(predict, label)])
+
+
+class AUPRCd(MetricWithoutThreshold):
+    @classmethod
+    def score(mcs, predict: list[float], label: list[float]) -> float:
+        return areaUnder([(r, p) for p, r, _ in SearchFd1.searchAllThreshold(predict, label)])
 
 
 class TrivialBestF1:
@@ -197,6 +199,12 @@ class TrivialBestFc1:
     @classmethod
     def score(cls, predict: list[float], label: list[float]) -> float:
         return max([Fc1.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
+
+
+class TrivialBestFd1:
+    @classmethod
+    def score(cls, predict: list[float], label: list[float]) -> float:
+        return max([Fd1.score([0 if pred < th else 1 for pred in predict], label) for th in predict])
 
 
 if __name__ == '__main__':
@@ -237,3 +245,4 @@ if __name__ == '__main__':
         make_sure_equal(TrivialBestF1.score(x, y), BestF1.score(x, y))
         make_sure_equal(TrivialBestFpa1.score(x, y), BestFpa1.score(x, y))
         make_sure_equal(TrivialBestFc1.score(x, y), BestFc1.score(x, y))
+        make_sure_equal(TrivialBestFd1.score(x, y), BestFd1.score(x, y))

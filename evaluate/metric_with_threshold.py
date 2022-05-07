@@ -5,6 +5,8 @@ import abc
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 from config import EPS
+from evaluate.utils import extractEvent, safeFloatDivide
+import numpy as np
 
 metric_with_threshold_list = []
 
@@ -102,9 +104,36 @@ class Fc1(MetricWithThreshold):
         return 2.0 * recall * precision / (recall + precision + EPS)
 
 
+class SDR(MetricWithThreshold):
+
+    @classmethod
+    def score(mcs, predict, label) -> float:
+        head, tail, count = extractEvent(label)
+        detectDelay = dict()
+        n = len(label)
+        for i in range(n):
+            if label[i] == 1:
+                detectDelay[head[i]] = 1.0
+        for i in range(n):
+            if predict[i] == 1 and label[i] == 1:
+                if detectDelay[head[i]] == 1:
+                    detectDelay[head[i]] = (i - head[i]) / (tail[i] - head[i] + 1)
+
+        return 1.0 - sum(detectDelay.values()) / len(detectDelay)
+
+
+class Fd1(MetricWithThreshold):
+
+    @classmethod
+    def score(mcs, predict, label) -> float:
+        precision = Precision.score(predict, label)
+        recall = SDR.score(predict, label)
+        return safeFloatDivide(precision * recall * 2, precision + recall)
+
+
 if __name__ == '__main__':
-    x = [0, 1, 0, 1, 1, 0]
-    y = [0, 1, 1, 1, 0, 1]
+    x = [0, 1, 0, 1, 1, 0, 0, 0, 0, 1]
+    y = [0, 1, 1, 1, 0, 1, 0, 1, 1, 1]
     print(Precision.score(x, y))
     print(metric_with_threshold_list)
     for metric in metric_with_threshold_list:
