@@ -8,25 +8,27 @@ TSAD_Evaluator是一个用于评估各类时间序列异常检测(Time Series An
 - **通用性**：适配各类算法以及应用场景，只需实现相应的接口即可
 - **简易性**：支持一键脚本化运行，快速评估单个算法/多个算法在一个数据集/多个数据集上的结果
 - **全面性**：提供通用评价指标、针对时序数据设计的评价指标、自研指标、性能指标对算法进行全方位评估
-  
+
 ## 目录
-  - [系统介绍](#系统介绍)
+
+- [系统介绍](#系统介绍)
     - [数据集支持](#数据集支持)
     - [可视化支持](#可视化支持)
     - [算法抽象](#算法抽象)
     - [检测流程标准化](#检测流程标准化)
     - [效果评估](#效果评估)
-  - [如何使用](#如何使用)
+- [如何使用](#如何使用)
     - [安装所需依赖](#安装所需依赖)
     - [导入数据集](#导入数据集)
     - [实现算法](#实现算法)
     - [评估算法](#评估算法)
     - [拓展实现](#拓展实现)
-      - [对聚合函数的扩展](#对聚合函数的扩展)
-      - [对自动确立阈值方法的扩展](#对自动确立阈值方法的扩展)
-      - [对评价指标的扩展](#对评价指标的扩展)
-  - [联系方式](#联系方式)
-  - [参考文献](#参考文献)
+        - [对聚合函数的扩展](#对聚合函数的扩展)
+        - [对自动确立阈值方法的扩展](#对自动确立阈值方法的扩展)
+        - [对评价指标的扩展](#对评价指标的扩展)
+- [联系方式](#联系方式)
+- [参考文献](#参考文献)
+
 ## 系统介绍
 
 <!-- 这边是不是应该有一张overview，整个系统的模块图 -->
@@ -46,11 +48,18 @@ TSAD_Evaluator是一个用于评估各类时间序列异常检测(Time Series An
 
 <!-- 之后可以显示下这些数据集的维度信息、点数、异常率等等，搞个表格-->
 
-- 单维度：[Yahoo](https://webscope.sandbox.yahoo.com/catalog.php?datatype=s&did=70)
-  , [KPI](https://github.com/NetManAIOps/KPI-Anomaly-Detection), [Industry](https://github.com/OpsPAI/ADSketch)
-  , [UCR](https://wu.renjie.im/research/anomaly-benchmarks-are-flawed/#ucr-time-series-anomaly-archive)
-- 多维度：[SMD](https://github.com/NetManAIOps/OmniAnomaly), [JumpStarter](https://github.com/NetManAIOps/JumpStarter),
-  [SKAB](https://github.com/waico/SKAB), [PSM](https://github.com/eBay/RANSynCoders)
+| 数据集                                                                                                 | 维度| 时间序列数| 总采样点数   | 总异常点数  | 异常比例| 
+|-----------------------------------------------------------------------------------------------------|----|-------|---------|--------|----------| 
+| [Yahoo](https://webscope.sandbox.yahoo.com/catalog.php?datatype=s&did=70)                           | 1  | 367   | 572966  | 3915   | 0.68%    |
+| [KPI](https://github.com/NetManAIOps/KPI-Anomaly-Detection)                                         | 1  | 29    | 5922913 | 134114 | 2.26%    |
+| [Industry](https://github.com/OpsPAI/ADSketch)                                                      | 1  | 70    | 695293  | 7614   | 1.10%    | 
+| [UCR](https://wu.renjie.im/research/anomaly-benchmarks-are-flawed/#ucr-time-series-anomaly-archive) | 1  | 250   | 19353766 | 49363  | 2.55%    |
+| [SMD](https://github.com/NetManAIOps/OmniAnomaly)                                                   | 38 | 28    | 1416825 | 29444  | 2.08%    |
+| [JumpStarter](https://github.com/NetManAIOps/JumpStarter)                                           | 19 | 60    | 777600  | 55101  | 7.09%    |
+| [SKAB](https://github.com/waico/SKAB)                                                               | 9  | 34    | 37401   | 13067  | 34.94%   |
+| [PSM](https://github.com/eBay/RANSynCoders)                                                         | 26 | 1     | 220322  | 24381  | 11.07%   |
+
+> 打算但是暂未支持的数据集：NAB，SMAP，MSL，SWaT、WADI
 
 ### 可视化支持
 

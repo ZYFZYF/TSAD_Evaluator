@@ -61,5 +61,16 @@ def clear_all_detect_result():
             client.drop_measurement(measurement_name)
 
 
+def profile_time_series(measurement: str) -> (int, int):
+    points_num = [item['result'] for item in
+                  client.query(f'select count(label) as result from \"{measurement}\" ').get_points(
+                      measurement=measurement)][0]
+    anomaly_num = int([item['result'] for item in
+                       client.query(f'select sum(label) as result from \"{measurement}\" ').get_points(
+                           measurement=measurement)][0])
+    return points_num, anomaly_num
+
+
 if __name__ == '__main__':
-    clear_all_detect_result()
+    # clear_all_detect_result()
+    print(profile_time_series("Yahoo@synthetic_1"))

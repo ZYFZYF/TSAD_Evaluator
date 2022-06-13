@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from config import RAW_TIME_SERIES_MEASUREMENT, LABEL_COLUMN
 from data_prepare.raw_time_series import RawTimeSeries
-from database.influxdbtool import query_field_of_tags
+from database.influxdbtool import query_field_of_tags, profile_time_series
 
 
 class Dataset(metaclass=ABCMeta):
@@ -170,6 +170,25 @@ class Dataset(metaclass=ABCMeta):
             ts.save()
 
 
+def profile_dataset(dataset: str):
+    ts_name_list = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': dataset}, field='name')
+    total_points = 0
+    total_anomaly_points = 0
+    min_dim = 1000000
+    max_dim = 0
+    for ts_name in ts_name_list:
+        points, anomaly_points = profile_time_series(ts_name)
+        total_points += points
+        total_anomaly_points += anomaly_points
+        num_dimension = query_field_of_tags(measurement=RAW_TIME_SERIES_MEASUREMENT, tags={'dataset': dataset},
+                                            field='dim_num')
+        for i in num_dimension:
+            min_dim = min(min_dim, i)
+            max_dim = max(max_dim, i)
+    print(
+        f"数据集{dataset}共有{len(ts_name_list)}个时间序列数据，其中最小维度为{min_dim}，最大维度为{max_dim}，共计{total_points}个点，{total_anomaly_points}个异常点，{total_anomaly_points / total_points}的异常比例")
+
+
 if __name__ == '__main__':
     # Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
     # Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()
@@ -181,4 +200,6 @@ if __name__ == '__main__':
     # Dataset.fetch_SKAB('../data/SKAB/SKAB-master').save()
     # Dataset.fetch_JumpStarter('../data/JumpStarter/JumpStarter-main').save()
     # Dataset.fetch_TODS('../data/TODS/tods-benchmark').save()
-    Dataset.fetch_PSM('../data/PSM/RANSynCoders-main').save()
+    # Dataset.fetch_PSM('../data/PSM/RANSynCoders-main').save()
+    for dataset in ['Yahoo', 'KPI', 'Industry', 'UCR', 'SMD', 'JumpStarter', 'SKAB', 'PSM']:
+        profile_dataset(dataset)
