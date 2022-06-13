@@ -171,13 +171,14 @@ class Dataset(metaclass=ABCMeta):
 
 
 if __name__ == '__main__':
+    # Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
+    # Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()
+    # Dataset.fetch_NAB('../data/NAB/NAB-master').save()
+    # Dataset.fetch_Industry('../data/Industry/ADSketch-main').save()
+    # Dataset.fetch_UCR('../data/UCR/AnomalyDatasets_2021').save()
+
     # Dataset.fetch_SMD('../data/SMD/OmniAnomaly-master/ServerMachineDataset').save()
     # Dataset.fetch_SKAB('../data/SKAB/SKAB-master').save()
     # Dataset.fetch_JumpStarter('../data/JumpStarter/JumpStarter-main').save()
-    # Dataset.fetch_NAB('../data/NAB/NAB-master').save()
-    # Dataset.fetch_Industry('../data/Industry/ADSketch-main').save()
-    # Dataset.fetch_Yahoo('../data/Yahoo/ydata-labeled-time-series-anomalies-v1_0').save()
-    # Dataset.fetch_KPI('../data/KPI/KPI-Anomaly-Detection-master').save()
-    # Dataset.fetch_UCR('../data/UCR/AnomalyDatasets_2021').save()
     # Dataset.fetch_TODS('../data/TODS/tods-benchmark').save()
     Dataset.fetch_PSM('../data/PSM/RANSynCoders-main').save()
